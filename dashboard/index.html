@@ -165,7 +165,7 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
     $('loading').hidden=true;$('main').hidden=false;
     $('wk').textContent=lab(d.weekStart)+' to '+lab(add(d.weekStart,4));
     var H=$('headline');H.innerHTML='';
-    var phBad=d.workdaysSoFar>0&&d.phDone<d.workdaysSoFar;
+    var phBad=d.days.some(function(x){return !x.weekend&&x.required.some(function(r){return r.name==='Power Hour'&&(r.state==='missed'||r.state==='short');});});
     [
       {l:'Power Hour',v:d.workdaysSoFar?d.phDone+' of '+d.workdaysSoFar:'Starts soon',s:d.workdaysSoFar?'workdays so far':'no plays logged yet',cls:phBad?'bad':(d.workdaysSoFar?'ok':'')},
       {l:'Plays run',v:d.playsRun,s:'ended this week'},
