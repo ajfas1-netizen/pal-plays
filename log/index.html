@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f6b46">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plays">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" href="../icons/icon-192.png">
+<title>Megan's Plays</title>
+<script src="../shared/config.js"></script>
+<script src="../shared/api.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f6f3; --panel:#ffffff; --ink:#18231d; --muted:#56635b; --line:#d8dfd9;
+  --turf:#1f6b46; --turf-ink:#ffffff; --turf-soft:#e3efe7; --marker:#f2c230; --marker-ink:#5a4300; --marker-soft:#fbf1cf;
+  --bad:#b23b2c; --bad-soft:#f7e3df;
+  --display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#101612; --panel:#171f1a; --ink:#e7eee9; --muted:#9caba2; --line:#2a352e;
+  --turf:#5cc28d; --turf-ink:#0d1a12; --turf-soft:#1c3226; --marker:#f2c230; --marker-ink:#f6d870; --marker-soft:#3a3115;
+  --bad:#ef8a7c; --bad-soft:#3a1f1b; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+.app{max-width:520px;margin:0 auto;padding-inline:16px;padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(28px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top h1{font:800 26px var(--display);text-transform:uppercase;letter-spacing:.02em;margin:0}
+.sync{font:500 12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--turf);display:inline-block}
+.sync.wait i{background:var(--marker)}
+.sync.err i{background:var(--bad)}
+.status{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font:600 13px var(--body);padding:5px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
+.pill.ok{background:var(--turf-soft);color:var(--turf);border-color:transparent}
+.pill.warn{background:var(--marker-soft);color:var(--marker-ink);border-color:transparent}
+.pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.yard{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px}
+.yard .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.yard b{color:var(--ink);font-family:var(--mono)}
+.field{height:22px;border-radius:4px;background:var(--turf);position:relative;overflow:hidden}
+.field .lines{position:absolute;inset:0;background-image:repeating-linear-gradient(to right,rgba(255,255,255,.45) 0 2px,transparent 2px 10%)}
+.field .gain{position:absolute;inset:0 auto 0 0;background:rgba(255,255,255,.28);width:0;transition:width .3s}
+.field .los{position:absolute;top:0;bottom:0;width:4px;background:var(--marker);left:0;transition:left .3s}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--marker);outline-offset:2px}
+.go{width:100%;border:0;border-radius:10px;padding:20px;background:var(--turf);color:var(--turf-ink);font:800 26px var(--display);text-transform:uppercase;letter-spacing:.04em}
+.go small{display:block;font:500 13px var(--body);text-transform:none;letter-spacing:0;opacity:.85}
+.alt{width:100%;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:14px;font:700 18px var(--display);text-transform:uppercase;letter-spacing:.04em}
+h2{font:700 15px var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 0}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qb{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:14px 10px;font:600 15px var(--body);min-height:64px}
+.qb:active,.tb:active{transform:scale(.97)}
+.list{display:grid;gap:6px}
+.li{display:flex;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:15px}
+.li span:last-child{font-family:var(--mono);color:var(--muted);font-size:13px;white-space:nowrap}
+.empty{color:var(--muted);font-size:14px}
+/* in play */
+.play-head{background:var(--turf);color:var(--turf-ink);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.play-head .n{font:800 26px var(--display);text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.play-head .clock{font:600 28px var(--mono);font-variant-numeric:tabular-nums}
+.taps{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tb{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:12px 8px;min-height:96px;display:grid;place-items:center;gap:2px;transition:transform .05s}
+.tb b{font:800 40px var(--display);line-height:1;font-variant-numeric:tabular-nums}
+.tb span{font:600 14px var(--body);color:var(--muted)}
+.tb.main{grid-column:1/-1;background:var(--turf-soft);border-color:transparent;min-height:120px}
+.tb.main b{font-size:52px;color:var(--turf)}
+.tb.flash{background:var(--marker-soft)}
+.row2{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.end{border:0;border-radius:10px;padding:16px;background:var(--ink);color:var(--bg);font:800 20px var(--display);text-transform:uppercase;letter-spacing:.05em}
+.undo{border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--panel);color:var(--ink);font:600 15px var(--body)}
+.note{display:grid;gap:6px}
+input[type=text],input[type=number]{font:500 16px var(--body);width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+input[type=number]{font-family:var(--mono)}
+/* sheet */
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet[hidden]{display:none}
+.sheet .box{background:var(--bg);width:100%;max-width:520px;border-radius:14px 14px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;max-height:85vh;overflow:auto}
+.sheet h3{font:800 22px var(--display);text-transform:uppercase;margin:0}
+.pick{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:14px;text-align:left;font:600 16px var(--body)}
+.cancel{border:0;background:none;color:var(--muted);font:600 15px var(--body);padding:10px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font:600 14px var(--body);z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+[hidden]{display:none!important}
+.blocked{max-width:520px;margin:0 auto;padding:48px 16px;display:grid;gap:10px}
+.blocked h1{font:800 26px var(--display);text-transform:uppercase;margin:0}
+.blocked p{color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="blocked" id="blocked" hidden><h1>Megan's Plays</h1><p id="blockedMsg">Open this from the private link AJ sent you.</p></div>
+<div class="app" id="app">
+  <div class="top"><h1 id="title">Megan's Plays</h1><div class="sync" id="sync"><i></i><span id="syncText">Loading</span></div></div>
+
+  <!-- HOME -->
+  <div id="home" style="display:grid;gap:14px">
+    <div class="status" id="status"></div>
+    <div class="yard">
+      <div class="row"><span><b id="wkT">0</b> of <b id="wkG">100</b> touches this week</span><span id="wkLeft"></span></div>
+      <div class="field"><div class="gain" id="gain"></div><div class="lines"></div><div class="los" id="los"></div></div>
+    </div>
+    <button class="go" id="startPH">Start Power Hour<small id="phSub">The one play you run every day</small></button>
+    <button class="alt" id="startOther">Start another play</button>
+    <h2>Quick log</h2>
+    <div class="quick">
+      <button class="qb" data-quick="new_name">New connection</button>
+      <button class="qb" data-quick="tour_booked">Tour booked</button>
+      <button class="qb" data-quick="referral">Referral</button>
+      <button class="qb" id="pledgeBtn">Pledge</button>
+    </div>
+    <h2>Today</h2>
+    <div class="list" id="todayList"></div>
+  </div>
+
+  <!-- IN PLAY -->
+  <div id="inplay" hidden style="display:grid;gap:12px">
+    <div class="play-head"><span class="n" id="pName">Power Hour</span><span class="clock" id="pClock">0:00</span></div>
+    <div class="taps" id="taps"></div>
+    <div class="row2"><button class="undo" id="undoBtn">Undo last</button><button class="end" id="endBtn">End play</button></div>
+    <div class="note"><label for="pNote" style="font-size:13px;color:var(--muted);font-weight:600">Names or next steps (optional)</label><input type="text" id="pNote" maxlength="300" placeholder="Jen R., tour Tue 10am"></div>
+    <button class="alt" id="pledgeBtn2" style="font-size:16px">Log a pledge</button>
+  </div>
+</div>
+
+<div class="sheet" id="pickSheet" hidden><div class="box"><h3>Start a play</h3><div class="list" id="pickList"></div><button class="cancel" id="pickCancel">Cancel</button></div></div>
+<div class="sheet" id="pledgeSheet" hidden><div class="box">
+  <h3>Log a pledge</h3>
+  <label for="pAmt" style="font-size:13px;color:var(--muted);font-weight:600">Amount in dollars</label>
+  <input type="number" id="pAmt" inputmode="numeric" min="1" step="1" placeholder="1000">
+  <label for="pWho" style="font-size:13px;color:var(--muted);font-weight:600">Who, and for what</label>
+  <input type="text" id="pWho" maxlength="200" placeholder="All Area Roofing, Leadership Circle">
+  <span id="pErr" style="color:var(--bad);font-size:13px" role="alert"></span>
+  <button class="go" id="pSave" style="padding:14px;font-size:20px">Save pledge</button>
+  <button class="cancel" id="pCancel">Cancel</button>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var state = null, lastTaps = [];
+  var KEY = PAL.key('log');
+  if (!PAL.configured || !KEY) { $('app').hidden=true; $('blocked').hidden=false; if(!PAL.configured) $('blockedMsg').textContent='This app isn’t connected yet. AJ is finishing setup.'; return; }
+  PAL.registerWorker();
+  var Q = []; try { Q = JSON.parse(localStorage.getItem('palplays.q') || '[]'); } catch(e) { Q = []; }
+  var busy = false;
+
+  function saveQ(){ try { localStorage.setItem('palplays.q', JSON.stringify(Q)); } catch(e){} }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function toast(t){ var el=$('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(function(){ el.classList.remove('on'); }, 1200); }
+  function setSync(){
+    var s=$('sync');
+    s.className='sync'+(Q.length?' wait':'');
+    $('syncText').textContent = Q.length ? (Q.length+' to save') : 'Saved';
+  }
+  function call(fn, args, ok, fail){ PAL.call(KEY, fn, args[0]).then(ok, fail); }
+  function enqueue(fn, arg){ Q.push({fn: fn, arg: arg}); saveQ(); setSync(); flush(); }
+  function flush(){
+    if (busy || !Q.length) return;
+    busy = true;
+    var jobs = Q.slice(0, 50);
+    PAL.call(KEY, 'batch', jobs).then(function(res){
+      Q.splice(0, jobs.length); saveQ(); busy = false;
+      (res.results||[]).forEach(function(r){ if (r && r.error) toast(r.error); });
+      if (res.state && !Q.length) { state = res.state; render(); }
+      setSync(); flush();
+    }, function(err){
+      busy = false;
+      if (err && err.server) { $('sync').className='sync err'; $('syncText').textContent=err.message; return; }
+      $('sync').className='sync err'; $('syncText').textContent='No signal, '+Q.length+' waiting';
+      setTimeout(flush, 5000);
+    });
+  }
+  window.addEventListener('online', flush);
+
+  function fmtClock(ms){ var s=Math.max(0,Math.floor(ms/1000)); var h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return (h? h+':'+String(m).padStart(2,'0') : m)+':'+String(x).padStart(2,'0'); }
+  function mins(m){ return m==null ? '' : m+' min'; }
+
+  var TAPS = [
+    {type:'touch', label:'Dial', main:true},
+    {type:'conversation', label:'Conversation'},
+    {type:'new_name', label:'New name'},
+    {type:'tour_booked', label:'Tour booked'},
+    {type:'ask', label:'Ask made'},
+    {type:'referral', label:'Referral'}
+  ];
+  function touchLabel(play){ return play==='Door Knock' ? 'Door' : play==='Chamber Five' ? 'Intro' : play==='Mission Drop' ? 'Drop-off' : 'Dial'; }
+
+  function render(){
+    if (!state) return;
+    if (state.open) { $('home').hidden=true; $('inplay').hidden=false; renderPlay(); }
+    else { $('inplay').hidden=true; $('home').hidden=false; renderHome(); }
+  }
+  function renderHome(){
+    var st=$('status'); st.innerHTML='';
+    (state.required||[]).forEach(function(r){
+      var p=document.createElement('span');
+      p.className='pill '+(r.done>0?'ok':r.done<0?'warn':'bad');
+      p.textContent = r.name+': '+(r.done>0?'done, '+r.done+' min':r.done<0?'short, '+(-r.done)+' min':'not yet today');
+      st.appendChild(p);
+    });
+    var s=document.createElement('span'); s.className='pill'; s.textContent='Streak: '+(state.streak||0)+' workday'+(state.streak===1?'':'s'); st.appendChild(s);
+    var ph=(state.required||[]).filter(function(r){return r.name==='Power Hour';})[0];
+    $('phSub').textContent = ph && ph.done>0 ? 'Done today. Run another if you have the hour.' : 'The one play you run every day';
+    var t=state.weekTouches||0, g=Math.max(1,state.weeklyTouchTarget||100), pct=Math.min(100,t/g*100);
+    $('wkT').textContent=t; $('wkG').textContent=g; $('gain').style.width=pct+'%'; $('los').style.left='calc('+pct+'% - 2px)';
+    $('wkLeft').textContent = t>=g ? 'Touchdown' : (g-t)+' to go';
+    var L=$('todayList'); L.innerHTML='';
+    var c=state.todayCounts||{};
+    if (!state.todayPlays.length) { var e=document.createElement('div'); e.className='empty'; e.textContent='No plays yet today. Start with Power Hour.'; L.appendChild(e); }
+    state.todayPlays.forEach(function(p){
+      var d=document.createElement('div'); d.className='li';
+      d.innerHTML='<span></span><span></span>'; d.firstChild.textContent=p.play;
+      d.lastChild.textContent = p.status==='ended' ? mins(p.minutes) : p.status==='not ended' ? 'never ended' : 'running';
+      L.appendChild(d);
+    });
+    var sum=document.createElement('div'); sum.className='empty';
+    sum.textContent='Today: '+(c.touch||0)+' touches, '+(c.conversation||0)+' conversations, '+(c.new_name||0)+' new names, '+(c.tour_booked||0)+' tours booked, '+(c.ask||0)+' asks'+(c.pledge?', $'+Number(c.pledge).toLocaleString('en-US')+' pledged':'')+'.';
+    L.appendChild(sum);
+  }
+  function renderPlay(){
+    var o=state.open; $('pName').textContent=o.play;
+    var T=$('taps'); T.innerHTML='';
+    TAPS.forEach(function(t){
+      var b=document.createElement('button'); b.className='tb'+(t.main?' main':''); b.type='button';
+      b.innerHTML='<b></b><span></span>';
+      b.firstChild.textContent = o.counts[t.type]||0;
+      b.lastChild.textContent = t.type==='touch' ? touchLabel(o.play) : t.label;
+      b.addEventListener('click', function(){ doTap(t.type, b); });
+      T.appendChild(b);
+    });
+    tick();
+  }
+  function tick(){ if (state && state.open) $('pClock').textContent = fmtClock(Date.now()-state.open.start); }
+  setInterval(tick, 1000);
+
+  function doTap(type, btn){
+    var o=state.open; var id=uid();
+    o.counts[type]=(o.counts[type]||0)+1;
+    if (type==='touch') state.weekTouches=(state.weekTouches||0)+1;
+    if (btn){ btn.firstChild.textContent=o.counts[type]; btn.classList.add('flash'); setTimeout(function(){btn.classList.remove('flash');},180); }
+    if (navigator.vibrate) { try{ navigator.vibrate(15); }catch(e){} }
+    lastTaps.push({id:id,type:type});
+    enqueue('tap', {id:id, playId:o.id, play:o.play, type:type, qty:1, ts:Date.now()});
+  }
+  $('undoBtn').addEventListener('click', function(){
+    var t=lastTaps.pop(); if(!t){ toast('Nothing to undo'); return; }
+    var o=state.open; o.counts[t.type]=Math.max(0,(o.counts[t.type]||0)-1);
+    if (t.type==='touch') state.weekTouches=Math.max(0,(state.weekTouches||0)-1);
+    var qi=-1; Q.forEach(function(j,i){ if(j.fn==='tap'&&j.arg.id===t.id) qi=i; });
+    if (qi>=0 && !busy){ Q.splice(qi,1); saveQ(); setSync(); } else enqueue('undo',{id:t.id});
+    renderPlay(); toast('Undone');
+  });
+  $('endBtn').addEventListener('click', function(){
+    var o=state.open; var m=Math.round((Date.now()-o.start)/60000);
+    enqueue('endPlay',{playId:o.id, ts:Date.now(), note:$('pNote').value.trim()});
+    state.todayPlays.push({play:o.play, minutes:m, status:'ended'});
+    (state.required||[]).forEach(function(r){ if(r.name===o.play){ var tot=Math.abs(r.done)+m; r.done = (o.play!=='Power Hour'||tot>=45)?tot:-tot; } });
+    Object.keys(o.counts).forEach(function(k){ state.todayCounts[k]=(state.todayCounts[k]||0)+o.counts[k]; });
+    state.open=null; lastTaps=[]; $('pNote').value='';
+    render(); toast(o.play+' logged, '+m+' min');
+  });
+
+  function start(play){
+    var id=uid(), now=Date.now();
+    enqueue('startPlay',{id:id, play:play, ts:now});
+    state.open={id:id, play:play, start:now, counts:{}}; lastTaps=[];
+    render(); window.scrollTo(0,0);
+  }
+  $('startPH').addEventListener('click', function(){ start('Power Hour'); });
+  $('startOther').addEventListener('click', function(){
+    var L=$('pickList'); L.innerHTML='';
+    (state.plays||[]).forEach(function(p){
+      var b=document.createElement('button'); b.className='pick'; b.type='button'; b.textContent=p.name;
+      b.addEventListener('click', function(){ $('pickSheet').hidden=true; start(p.name); });
+      L.appendChild(b);
+    });
+    $('pickSheet').hidden=false;
+  });
+  $('pickCancel').addEventListener('click', function(){ $('pickSheet').hidden=true; });
+
+  document.querySelectorAll('[data-quick]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var type=b.getAttribute('data-quick');
+      enqueue('tap',{id:uid(), playId:'', play:'', type:type, qty:1, ts:Date.now()});
+      state.todayCounts[type]=(state.todayCounts[type]||0)+1;
+      renderHome(); toast(b.textContent+' logged');
+    });
+  });
+  function openPledge(){ $('pAmt').value=''; $('pWho').value=''; $('pErr').textContent=''; $('pledgeSheet').hidden=false; setTimeout(function(){ $('pAmt').focus(); },50); }
+  $('pledgeBtn').addEventListener('click', openPledge);
+  $('pledgeBtn2').addEventListener('click', openPledge);
+  $('pCancel').addEventListener('click', function(){ $('pledgeSheet').hidden=true; });
+  $('pAmt').addEventListener('input', function(){ $('pErr').textContent=''; });
+  $('pSave').addEventListener('click', function(){
+    var amt=Math.round(Number($('pAmt').value));
+    if(!amt||amt<1){ $('pErr').textContent='Enter the amount in dollars.'; return; }
+    var o=state.open;
+    enqueue('tap',{id:uid(), playId:o?o.id:'', play:o?o.play:'', type:'pledge', qty:1, amount:amt, note:$('pWho').value.trim(), ts:Date.now()});
+    state.todayCounts.pledge=(state.todayCounts.pledge||0)+amt;
+    $('pledgeSheet').hidden=true; toast('$'+amt.toLocaleString('en-US')+' pledge logged'); if(!o) renderHome();
+  });
+
+  function load(){
+    call('getState', [], function(s){ if(Q.length && state) { flush(); return; } state=s; try{localStorage.setItem('palplays.state',JSON.stringify(s));}catch(e){} render(); setSync(); }, function(err){
+      if (err && err.server) { $('app').hidden=true; $('blocked').hidden=false; $('blockedMsg').textContent=err.message+' Ask AJ for your link.'; return; }
+      if (!state) { try { state=JSON.parse(localStorage.getItem('palplays.state')||'null'); } catch(e){} if (state) render(); }
+      $('sync').className='sync err'; $('syncText').textContent='No signal'+(Q.length?', '+Q.length+' waiting':'');
+      setTimeout(load, 8000);
+    });
+  }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && !Q.length && !busy) load(); });
+  load();
+  flush();
+})();
+</script>
+</body>
+</html>

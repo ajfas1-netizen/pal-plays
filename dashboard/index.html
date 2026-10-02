@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f6b46">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" href="../icons/icon-192.png">
+<title>Growth Dashboard</title>
+<script src="../shared/config.js"></script>
+<script src="../shared/api.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f6f3; --panel:#ffffff; --ink:#18231d; --muted:#56635b; --line:#d8dfd9;
+  --turf:#1f6b46; --turf-ink:#ffffff; --turf-soft:#e3efe7; --marker:#f2c230; --marker-ink:#5a4300; --marker-soft:#fbf1cf;
+  --bad:#b23b2c; --bad-soft:#f7e3df;
+  --display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#101612; --panel:#171f1a; --ink:#e7eee9; --muted:#9caba2; --line:#2a352e;
+  --turf:#5cc28d; --turf-ink:#0d1a12; --turf-soft:#1c3226; --marker:#f2c230; --marker-ink:#f6d870; --marker-soft:#3a3115;
+  --bad:#ef8a7c; --bad-soft:#3a1f1b; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:calc(22px + env(safe-area-inset-top,0px)) 48px;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.eyebrow{font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--turf)}
+h1{font:800 clamp(30px,5vw,44px)/1 var(--display);text-transform:uppercase;letter-spacing:.01em;margin:2px 0 0}
+h2{font:700 18px var(--display);text-transform:uppercase;letter-spacing:.06em;margin:0}
+.nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nav button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:7px 12px;font:600 14px var(--body);cursor:pointer}
+.nav .wk{font:600 14px var(--mono);min-width:150px;text-align:center}
+button:focus-visible,input:focus-visible{outline:3px solid var(--marker);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
+.cols{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.cols>*{min-width:0}
+.headline{display:flex;flex-wrap:wrap;gap:10px}
+.hl{flex:1 1 150px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:2px}
+.hl .l{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hl .v{font:800 30px var(--display);font-variant-numeric:tabular-nums;line-height:1.1}
+.hl .s{font-size:12px;color:var(--muted)}
+.hl.bad{border-color:var(--bad)} .hl.bad .v{color:var(--bad)}
+.hl.ok .v{color:var(--turf)}
+.days{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.day{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;align-content:start;min-width:0}
+.day.future{opacity:.55}
+.day .dh{display:flex;justify-content:space-between;align-items:baseline}
+.day .dh b{font:700 17px var(--display);text-transform:uppercase;letter-spacing:.04em}
+.day .dh span{font:500 12px var(--mono);color:var(--muted)}
+.ph{font:600 13px var(--body);padding:6px 9px;border-radius:6px}
+.ph.done{background:var(--turf-soft);color:var(--turf)}
+.ph.short{background:var(--marker-soft);color:var(--marker-ink)}
+.ph.missed{background:var(--bad-soft);color:var(--bad)}
+.ph.pending,.ph.upcoming{background:var(--bg);color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:12px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:var(--bg)}
+.chip.ne{border-color:var(--bad);color:var(--bad)}
+.dsum{font:500 12px var(--mono);color:var(--muted)}
+.meter{display:grid;gap:5px}
+.meter .row{display:flex;justify-content:space-between;font-size:14px;gap:10px}
+.meter .row b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--turf);width:0}
+.bar.hit i{background:var(--turf)}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.mini div{background:var(--bg);border-radius:6px;padding:8px 10px}
+.mini span{display:block;font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mini b{font:700 22px var(--display);font-variant-numeric:tabular-nums}
+.rate{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:6px}
+.rate .r{font:600 15px var(--mono);text-align:right}
+.rate .b{font-size:12px;color:var(--muted)}
+.rate.weak{border-color:var(--bad);background:var(--bad-soft)}
+.hint{font-size:14px;border-left:3px solid var(--marker);padding-left:10px}
+.pace{position:relative;height:28px;background:var(--line);border-radius:4px;overflow:visible}
+.pace .fill{position:absolute;inset:0 auto 0 0;background:var(--turf);border-radius:4px}
+.pace .mark{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--marker)}
+.legend{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted)}
+.legend b{color:var(--ink);font-family:var(--mono)}
+svg text{font-family:var(--mono)}
+.notes{display:grid;gap:6px;max-height:260px;overflow:auto}
+.notes div{font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+.notes span{font:500 12px var(--mono);color:var(--muted);margin-right:8px}
+.fields{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.save{justify-self:start;border:0;border-radius:6px;padding:9px 16px;background:var(--turf);color:var(--turf-ink);font:700 15px var(--display);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+.msg{font-size:13px;color:var(--turf)}
+.err{color:var(--bad)}
+.loading{color:var(--muted);padding:40px 0;text-align:center}
+[hidden]{display:none!important}
+.blocked{max-width:720px;margin:0 auto;padding:48px 20px;display:grid;gap:10px}
+.blocked h1{margin:0}
+.blocked p{color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+<div class="blocked" id="blocked" hidden><h1>Megan's Week</h1><p id="blockedMsg">Open this from the private link AJ sent you.</p></div>
+<div class="wrap" id="app">
+  <header>
+    <div><div class="eyebrow">Martin County PAL · Strategic Growth</div><h1>Megan's Week</h1></div>
+    <div class="nav"><button id="prev" aria-label="Previous week">&#8249; Prev</button><span class="wk" id="wk">Loading</span><button id="next" aria-label="Next week">Next &#8250;</button><button id="refresh">Refresh</button></div>
+  </header>
+  <div id="loading" class="loading">Loading the week</div>
+  <div id="main" hidden style="display:grid;gap:18px">
+    <div class="headline" id="headline"></div>
+
+    <div class="card"><h2>Plays by day</h2><div class="days" id="days"></div></div>
+
+    <div class="cols">
+      <div class="card"><h2>Scoreboard vs targets</h2><div id="meters" style="display:grid;gap:12px"></div><div class="mini" id="mini"></div></div>
+      <div class="card"><h2>Where the chain breaks</h2><p style="margin:0;font-size:13px;color:var(--muted)">Rolling four weeks. Benchmarks are starting estimates until her real rates settle.</p><div id="rates" style="display:grid;gap:8px"></div><div class="hint" id="hint"></div></div>
+    </div>
+
+    <div class="cols">
+      <div class="card"><h2>Year one pace</h2><div class="pace"><div class="fill" id="paceFill"></div><div class="mark" id="paceMark"></div></div><div class="legend" id="paceLegend"></div></div>
+      <div class="card"><h2>Last eight weeks</h2><div id="trend" style="overflow-x:auto"></div></div>
+    </div>
+
+    <div class="cols">
+      <div class="card"><h2>Names and notes this week</h2><div class="notes" id="notes"></div></div>
+      <div class="card" id="targetsCard"><h2>Targets for next week</h2>
+        <p style="margin:0;font-size:13px;color:var(--muted)">Set these at the end of your Friday meeting. Megan sees the new touches target on her phone right away.</p>
+        <div class="fields">
+          <label>Touches<input type="number" min="0" id="tT"></label>
+          <label>New names<input type="number" min="0" id="tN"></label>
+          <label>Tours booked<input type="number" min="0" id="tB"></label>
+          <label>Starting balance ($)<input type="number" min="0" id="tS"></label>
+        </div>
+        <button class="save" id="saveT">Save targets</button><span class="msg" id="tMsg" role="status"></span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var KEY=PAL.key('dash');
+  if (!PAL.configured || !KEY) { $('app').hidden=true; $('blocked').hidden=false; if(!PAL.configured) $('blockedMsg').textContent='This dashboard isn’t connected yet. AJ is finishing setup.'; return; }
+  PAL.registerWorker();
+  var week=null, data=null;
+  var DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function pd(s){var a=s.split('-');return new Date(Date.UTC(+a[0],+a[1]-1,+a[2],12));}
+  function lab(s){var d=pd(s);return MN[d.getUTCMonth()]+' '+d.getUTCDate();}
+  function add(s,n){var d=pd(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+  function money(v){return '$'+Math.round(v).toLocaleString('en-US');}
+  function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+  function call(fn,args,ok,fail){ PAL.call(KEY,fn,args[0]).then(ok, fail||function(e){ if(e&&e.server){ $('app').hidden=true;$('blocked').hidden=false;$('blockedMsg').textContent=e.message+' Ask AJ for your link.'; return; } $('wk').textContent='No connection'; $('loading').textContent='Can’t reach the data right now. Try Refresh in a minute.'; }); }
+
+  function load(){ $('wk').textContent='Loading'; call('getDashboard',[week||''],function(d){data=d;week=d.weekStart;render();}); }
+  $('prev').onclick=function(){week=add(week,-7);load();};
+  $('next').onclick=function(){week=add(week,7);load();};
+  $('refresh').onclick=load;
+
+  function render(){
+    var d=data,s=d.settings,t=d.totals;
+    $('loading').hidden=true;$('main').hidden=false;
+    $('wk').textContent=lab(d.weekStart)+' to '+lab(add(d.weekStart,4));
+    var H=$('headline');H.innerHTML='';
+    var phBad=d.workdaysSoFar>0&&d.phDone<d.workdaysSoFar;
+    [
+      {l:'Power Hour',v:d.phDone+' of '+(d.workdaysSoFar||5),s:'workdays so far',cls:phBad?'bad':(d.workdaysSoFar?'ok':'')},
+      {l:'Plays run',v:d.playsRun,s:'ended this week'},
+      {l:'Touches',v:t.touch,s:'target '+s.weekly_touches,cls:t.touch>=s.weekly_touches?'ok':''},
+      {l:'Tours booked',v:t.tour_booked,s:'target '+s.weekly_tours_booked,cls:t.tour_booked>=s.weekly_tours_booked?'ok':''},
+      {l:'Pledged',v:money(t.pledge),s:d.pledgesThisWeek+' pledge'+(d.pledgesThisWeek===1?'':'s')}
+    ].forEach(function(x){var c=el('div','hl'+(x.cls?' '+x.cls:''));c.appendChild(el('span','l',x.l));c.appendChild(el('span','v',String(x.v)));c.appendChild(el('span','s',x.s));H.appendChild(c);});
+
+    var D=$('days');D.innerHTML='';
+    d.days.forEach(function(day){
+      var c=el('div','day'+(day.future?' future':''));
+      var h=el('div','dh');h.appendChild(el('b',null,DN[pd(day.date).getUTCDay()]));h.appendChild(el('span',null,lab(day.date)));c.appendChild(h);
+      day.required.forEach(function(r){
+        var txt=r.state==='done'?r.name+' '+r.minutes+' min':r.state==='short'?r.name+' only '+r.minutes+' min':r.state==='missed'?'No '+r.name:r.state==='pending'?r.name+' not yet':r.name;
+        if(!day.weekend)c.appendChild(el('div','ph '+r.state,txt));
+      });
+      var ch=el('div','chips');
+      day.plays.forEach(function(p){ if(p.play==='Power Hour'&&p.status==='ended')return; var x=el('span','chip'+(p.status==='not ended'?' ne':''),p.play+(p.status==='ended'?' '+p.minutes+'m':p.status==='open'?' running':' not ended'));ch.appendChild(x);});
+      c.appendChild(ch);
+      if(!day.future)c.appendChild(el('div','dsum',day.touches+' touches · '+day.tours+' tours · '+day.asks+' asks'));
+      D.appendChild(c);
+    });
+
+    var M=$('meters');M.innerHTML='';
+    [['Touches',t.touch,s.weekly_touches],['New names',t.new_name,s.weekly_new_names],['Tours booked',t.tour_booked,s.weekly_tours_booked]].forEach(function(m){
+      var w=el('div','meter');var r=el('div','row');r.appendChild(el('span',null,m[0]));r.appendChild(el('b',null,m[1]+' of '+m[2]));w.appendChild(r);
+      var b=el('div','bar');var i=el('i');i.style.width=Math.min(100,m[1]/Math.max(1,m[2])*100)+'%';b.appendChild(i);w.appendChild(b);M.appendChild(w);
+    });
+    var MI=$('mini');MI.innerHTML='';
+    [['Conversations',t.conversation],['Asks',t.ask],['Referrals',t.referral],['Tours held',t.tour_held]].forEach(function(m){var c=el('div');c.appendChild(el('span',null,m[0]));c.appendChild(el('b',null,String(m[1])));MI.appendChild(c);});
+
+    var R=$('rates');R.innerHTML='';var weak=-1,worst=Infinity;
+    d.rates.forEach(function(r,i){if(r.den>=5){var sc=(r.num/r.den)/r.bench;if(sc<worst){worst=sc;weak=i;}}});
+    d.rates.forEach(function(r,i){
+      var c=el('div','rate'+(i===weak&&worst<1?' weak':''));c.appendChild(el('span',null,r.name));
+      c.appendChild(el('span','r',r.den?Math.round(r.num/r.den*100)+'%':'No data'));
+      c.appendChild(el('span','b',r.den?(r.num+' of '+r.den):'Not enough logged yet'));c.appendChild(el('span','b','benchmark '+Math.round(r.bench*100)+'%'));R.appendChild(c);
+    });
+    var hints=['Few conversations from her touches. Check where the names come from and try different call times.','Conversations aren’t turning into tours. Role play the first 30 seconds of a call.','Booked tours aren’t happening. Confirm each tour the day before.','Asks aren’t closing. Check she’s asking for the right rung on the ladder.'];
+    var fourWkTouches=d.trend.slice(-4).reduce(function(a,w){return a+w.touches;},0);
+    var hint = fourWkTouches < s.weekly_touches*4*0.75 && d.trend.slice(-4).some(function(w){return w.touches>0;}) ? 'Activity comes first. Four week touches are '+fourWkTouches+' against about '+(s.weekly_touches*4)+'. Coach the plays before the skills.' : (weak>=0&&worst<1 ? hints[weak] : 'No weak link yet. Keep the volume up.');
+    $('hint').textContent=hint;
+
+    var pct=Math.min(100,d.ytd/s.year_target*100), pp=Math.min(100,d.pace/s.year_target*100);
+    $('paceFill').style.width=pct+'%';$('paceMark').style.left='calc('+pp+'% - 1px)';
+    var L=$('paceLegend');L.innerHTML='';
+    var a=el('span');a.innerHTML='Year to date <b></b>';a.querySelector('b').textContent=money(d.ytd);L.appendChild(a);
+    var b=el('span');b.innerHTML='Pace today <b></b>';b.querySelector('b').textContent=money(d.pace);L.appendChild(b);
+    var g=el('span');g.innerHTML='Goal <b></b>';g.querySelector('b').textContent=money(s.year_target);L.appendChild(g);
+
+    drawTrend(d.trend,s);
+
+    var N=$('notes');N.innerHTML='';
+    if(!d.notes.length)N.appendChild(el('div',null,'No names or notes logged this week.'));
+    d.notes.forEach(function(n){var r=el('div');r.appendChild(el('span',null,DN[pd(n.date).getUTCDay()]+' · '+n.kind.replace('_',' ')));r.appendChild(document.createTextNode(n.text));N.appendChild(r);});
+
+    $('targetsCard').hidden=!d.canEdit;
+    $('tT').value=s.weekly_touches;$('tN').value=s.weekly_new_names;$('tB').value=s.weekly_tours_booked;$('tS').value=s.starting_balance;
+  }
+
+  function drawTrend(tr,s){
+    var W=460,Hh=190,pl=34,pb=34,pt=14,bw=(W-pl-10)/tr.length;
+    var max=Math.max(s.weekly_touches,Math.max.apply(null,tr.map(function(w){return w.touches;})))*1.1||10;
+    var y=function(v){return pt+(Hh-pt-pb)*(1-v/max);};
+    var ns='http://www.w3.org/2000/svg';
+    var svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 '+W+' '+Hh);svg.setAttribute('width','100%');svg.setAttribute('role','img');svg.setAttribute('aria-label','Touches per week for the last eight weeks against the weekly target');
+    function sv(tag,at,txt){var e=document.createElementNS(ns,tag);for(var k in at)e.setAttribute(k,at[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+    [0,Math.round(max/2),Math.round(max)].forEach(function(v){sv('line',{x1:pl,x2:W-6,y1:y(v),y2:y(v),stroke:'var(--line)'});sv('text',{x:pl-6,y:y(v)+4,'text-anchor':'end','font-size':10,fill:'var(--muted)'},v);});
+    tr.forEach(function(w,i){
+      var x=pl+i*bw+bw*0.18,h=Math.max(0,y(0)-y(w.touches));
+      sv('rect',{x:x,y:y(w.touches),width:bw*0.64,height:h,rx:2,fill:i===tr.length-1?'var(--turf)':'var(--turf-soft)',stroke:'var(--turf)','stroke-width':i===tr.length-1?0:1});
+      if(w.touches)sv('text',{x:x+bw*0.32,y:y(w.touches)-4,'text-anchor':'middle','font-size':10,fill:'var(--ink)'},w.touches);
+      sv('text',{x:x+bw*0.32,y:Hh-18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},lab(w.week));
+      sv('text',{x:x+bw*0.32,y:Hh-5,'text-anchor':'middle','font-size':9.5,fill:w.phDays>=5?'var(--turf)':'var(--muted)'},'PH '+w.phDays+'/5');
+    });
+    sv('line',{x1:pl,x2:W-6,y1:y(s.weekly_touches),y2:y(s.weekly_touches),stroke:'var(--marker)','stroke-width':2,'stroke-dasharray':'5 4'});
+    sv('text',{x:W-8,y:y(s.weekly_touches)-5,'text-anchor':'end','font-size':10,fill:'var(--marker-ink)'},'target '+s.weekly_touches);
+    var T=$('trend');T.innerHTML='';T.appendChild(svg);
+    var cap=el('div',null,'Touches per week. PH shows Power Hour days out of 5.');cap.style.cssText='font-size:12px;color:var(--muted)';T.appendChild(cap);
+  }
+
+  $('saveT').onclick=function(){
+    $('tMsg').className='msg';$('tMsg').textContent='Saving';
+    call('saveTargets',[{weekly_touches:$('tT').value,weekly_new_names:$('tN').value,weekly_tours_booked:$('tB').value,starting_balance:$('tS').value}],function(){ $('tMsg').textContent='Targets saved.'; load(); },function(e){$('tMsg').className='msg err';$('tMsg').textContent=String(e&&e.message||e);});
+  };
+  load();
+  setInterval(function(){ if(!document.hidden) load(); }, 120000);
+})();
+</script>
+</body>
+</html>
