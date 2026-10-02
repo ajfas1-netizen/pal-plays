@@ -60,7 +60,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--marker);outline
 .ph.done{background:var(--turf-soft);color:var(--turf)}
 .ph.short{background:var(--marker-soft);color:var(--marker-ink)}
 .ph.missed{background:var(--bad-soft);color:var(--bad)}
-.ph.pending,.ph.upcoming{background:var(--bg);color:var(--muted)}
+.ph.pending,.ph.upcoming,.ph.before{background:var(--bg);color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{font-size:12px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:var(--bg)}
 .chip.ne{border-color:var(--bad);color:var(--bad)}
@@ -167,7 +167,7 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
     var H=$('headline');H.innerHTML='';
     var phBad=d.workdaysSoFar>0&&d.phDone<d.workdaysSoFar;
     [
-      {l:'Power Hour',v:d.phDone+' of '+(d.workdaysSoFar||5),s:'workdays so far',cls:phBad?'bad':(d.workdaysSoFar?'ok':'')},
+      {l:'Power Hour',v:d.workdaysSoFar?d.phDone+' of '+d.workdaysSoFar:'Starts soon',s:d.workdaysSoFar?'workdays so far':'no plays logged yet',cls:phBad?'bad':(d.workdaysSoFar?'ok':'')},
       {l:'Plays run',v:d.playsRun,s:'ended this week'},
       {l:'Touches',v:t.touch,s:'target '+s.weekly_touches,cls:t.touch>=s.weekly_touches?'ok':''},
       {l:'Tours booked',v:t.tour_booked,s:'target '+s.weekly_tours_booked,cls:t.tour_booked>=s.weekly_tours_booked?'ok':''},
@@ -179,13 +179,13 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
       var c=el('div','day'+(day.future?' future':''));
       var h=el('div','dh');h.appendChild(el('b',null,DN[pd(day.date).getUTCDay()]));h.appendChild(el('span',null,lab(day.date)));c.appendChild(h);
       day.required.forEach(function(r){
-        var txt=r.state==='done'?r.name+' '+r.minutes+' min':r.state==='short'?r.name+' only '+r.minutes+' min':r.state==='missed'?'No '+r.name:r.state==='pending'?r.name+' not yet':r.name;
+        var txt=r.state==='done'?r.name+' '+r.minutes+' min':r.state==='short'?r.name+' only '+r.minutes+' min':r.state==='missed'?'No '+r.name:r.state==='pending'?r.name+' not yet':r.state==='before'?'Before logging started':r.name;
         if(!day.weekend)c.appendChild(el('div','ph '+r.state,txt));
       });
       var ch=el('div','chips');
       day.plays.forEach(function(p){ if(p.play==='Power Hour'&&p.status==='ended')return; var x=el('span','chip'+(p.status==='not ended'?' ne':''),p.play+(p.status==='ended'?' '+p.minutes+'m':p.status==='open'?' running':' not ended'));ch.appendChild(x);});
       c.appendChild(ch);
-      if(!day.future)c.appendChild(el('div','dsum',day.touches+' touches · '+day.tours+' tours · '+day.asks+' asks'));
+      if(!day.future&&!day.before)c.appendChild(el('div','dsum',day.touches+' touches · '+day.tours+' tours · '+day.asks+' asks'));
       D.appendChild(c);
     });
 
@@ -239,12 +239,12 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
       sv('rect',{x:x,y:y(w.touches),width:bw*0.64,height:h,rx:2,fill:i===tr.length-1?'var(--turf)':'var(--turf-soft)',stroke:'var(--turf)','stroke-width':i===tr.length-1?0:1});
       if(w.touches)sv('text',{x:x+bw*0.32,y:y(w.touches)-4,'text-anchor':'middle','font-size':10,fill:'var(--ink)'},w.touches);
       sv('text',{x:x+bw*0.32,y:Hh-18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},lab(w.week));
-      sv('text',{x:x+bw*0.32,y:Hh-5,'text-anchor':'middle','font-size':9.5,fill:w.phDays>=5?'var(--turf)':'var(--muted)'},'PH '+w.phDays+'/5');
+      if(!w.before&&w.phOf)sv('text',{x:x+bw*0.32,y:Hh-5,'text-anchor':'middle','font-size':9.5,fill:w.phDays>=w.phOf?'var(--turf)':'var(--muted)'},'PH '+w.phDays+'/'+w.phOf);
     });
     sv('line',{x1:pl,x2:W-6,y1:y(s.weekly_touches),y2:y(s.weekly_touches),stroke:'var(--marker)','stroke-width':2,'stroke-dasharray':'5 4'});
     sv('text',{x:W-8,y:y(s.weekly_touches)-5,'text-anchor':'end','font-size':10,fill:'var(--marker-ink)'},'target '+s.weekly_touches);
     var T=$('trend');T.innerHTML='';T.appendChild(svg);
-    var cap=el('div',null,'Touches per week. PH shows Power Hour days out of 5.');cap.style.cssText='font-size:12px;color:var(--muted)';T.appendChild(cap);
+    var cap=el('div',null,'Touches per week. PH shows Power Hour days out of the workdays logged.');cap.style.cssText='font-size:12px;color:var(--muted)';T.appendChild(cap);
   }
 
   $('saveT').onclick=function(){

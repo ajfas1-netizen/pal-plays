@@ -343,6 +343,9 @@ function getDashboard(k, weekStart) {
   var plays = plays_();
   var ev = events_();
   var reqNames = playList_().filter(function (p) { return p.required; }).map(function (p) { return p.name; });
+  var firstDay = today;
+  plays.forEach(function (p) { if (p.date && p.date < firstDay) firstDay = p.date; });
+  ev.forEach(function (e) { if (e.date && e.date < firstDay) firstDay = e.date; });
   var sumType = function (from, to, type) {
     return ev.filter(function (e) { return e.type === type && e.date >= from && e.date <= to; })
       .reduce(function (a, e) { return a + (type === 'pledge' ? e.amount : e.qty); }, 0);
@@ -356,10 +359,10 @@ function getDashboard(k, weekStart) {
     if (weekend && !dp.length) continue;
     var req = reqNames.map(function (n) {
       var v = doneFor_(plays, d, n, st);
-      return { name: n, minutes: Math.abs(v), state: v > 0 ? 'done' : v < 0 ? 'short' : (d > today ? 'upcoming' : (d === today ? 'pending' : 'missed')) };
+      return { name: n, minutes: Math.abs(v), state: v > 0 ? 'done' : v < 0 ? 'short' : (d > today ? 'upcoming' : (d < firstDay ? 'before' : (d === today ? 'pending' : 'missed'))) };
     });
     days.push({
-      date: d, weekend: weekend, future: d > today,
+      date: d, weekend: weekend, future: d > today, before: d < firstDay,
       plays: dp.map(function (p) { return { play: p.play, minutes: p.minutes, status: p.status, start: p.start }; }),
       required: req,
       touches: sumType(d, d, 'touch'), tours: sumType(d, d, 'tour_booked'), asks: sumType(d, d, 'ask')
@@ -383,8 +386,9 @@ function getDashboard(k, weekStart) {
   for (var w = 7; w >= 0; w--) {
     var a = addDays_(ws, -7 * w), b = addDays_(a, 6);
     var phDays = 0;
-    for (var j = 0; j < 5; j++) { if (doneFor_(plays, addDays_(a, j), 'Power Hour', st) > 0) phDays++; }
-    trend.push({ week: a, touches: sumType(a, b, 'touch'), tours: sumType(a, b, 'tour_booked'), pledged: sumType(a, b, 'pledge'), phDays: phDays });
+    var counted = 0;
+    for (var j = 0; j < 5; j++) { var dj = addDays_(a, j); if (dj < firstDay || dj > today) continue; counted++; if (doneFor_(plays, dj, 'Power Hour', st) > 0) phDays++; }
+    trend.push({ week: a, before: b < firstDay, touches: sumType(a, b, 'touch'), tours: sumType(a, b, 'tour_booked'), pledged: sumType(a, b, 'pledge'), phDays: phDays, phOf: counted });
   }
 
   var ytd = st.starting_balance + sumType(st.start_date, '9999-12-31', 'pledge');
@@ -396,7 +400,7 @@ function getDashboard(k, weekStart) {
   plays.filter(function (p) { return p.note && p.date >= ws && p.date <= we; }).forEach(function (p) { notes.push({ date: p.date, ts: p.end || p.start, text: p.note, kind: p.play }); });
   notes.sort(function (a, b) { return b.ts - a.ts; });
 
-  var workdaysSoFar = days.filter(function (d) { return !d.weekend && !d.future; }).length;
+  var workdaysSoFar = days.filter(function (d) { return !d.weekend && !d.future && !d.before; }).length;
   var phDone = days.filter(function (d) { return !d.weekend && d.required.some(function (r) { return r.name === 'Power Hour' && r.state === 'done'; }); }).length;
 
   return {
