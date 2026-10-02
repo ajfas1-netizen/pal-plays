@@ -13,7 +13,7 @@ About 15 minutes. Do the Google steps signed in to the account that should own t
    - Who has access: **Anyone**
    Click **Deploy**.
 5. Choose **showLinks** in the function menu and click **Run**. The execution log shows three lines:
-   - **Data service URL**: send it to Claude, or paste it into `shared/config.js`.
+   - **Data service URL**: use the Web app URL from Deploy, Manage deployments. It ends in `/exec`. Paste it into `shared/config.js`. A URL ending in `/dev` only works for you.
    - **Megan (logger)**: send to Megan only.
    - **Noel (dashboard)**: send to Noel only. Bookmark it yourself too.
 

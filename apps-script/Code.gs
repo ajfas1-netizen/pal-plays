@@ -67,7 +67,7 @@ function showLinks() {
   var url = ScriptApp.getService().getUrl();
   var pages = props.getProperty('PAGES_URL') || PAGES_DEFAULT;
   if (!url) { Logger.log('Deploy the web app first, then run showLinks() again.'); return; }
-  Logger.log('Data service URL (send this to Claude for config.js): ' + url);
+  Logger.log('Data service URL: use the Web app URL from Deploy > Manage deployments (it ends in /exec). If this one ends in /dev, ignore it: ' + url);
   Logger.log('Megan (logger): ' + pages + 'log/#k=' + props.getProperty('LOG_KEY'));
   Logger.log('Noel (dashboard): ' + pages + 'dashboard/#k=' + props.getProperty('DASH_KEY'));
 }
