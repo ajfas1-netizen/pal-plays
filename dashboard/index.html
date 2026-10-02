@@ -12,8 +12,8 @@
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" href="../icons/icon-192.png">
 <title>Growth Dashboard</title>
-<script src="../shared/config.js?v=3"></script>
-<script src="../shared/api.js?v=3"></script>
+<script src="../shared/config.js?v=5"></script>
+<script src="../shared/api.js?v=5"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
@@ -38,6 +38,20 @@ h1{font:800 clamp(30px,5vw,44px)/1 var(--display);text-transform:uppercase;lette
 h2{font:700 18px var(--display);text-transform:uppercase;letter-spacing:.06em;margin:0}
 .nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .nav button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:7px 12px;font:600 14px var(--body);cursor:pointer}
+.nav .back{border:1px solid var(--turf);background:var(--turf);color:var(--turf-ink);border-radius:6px;padding:7px 12px;font:600 14px var(--body);text-decoration:none}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.nav .seg button{border:0;border-radius:0;padding:7px 12px}
+.nav .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.mhead{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center}
+.mcell{border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:58px;display:grid;gap:2px;align-content:start;font-size:12px;min-width:0}
+.mcell b{font:600 12px var(--mono)}
+.mcell.done{background:var(--turf-soft);border-color:transparent}
+.mcell.short{background:var(--marker-soft);border-color:transparent}
+.mcell.missed{background:var(--bad-soft);border-color:transparent}
+.mcell.blank{border:0}
+.mcell.future,.mcell.before{opacity:.5}
+.mcell span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav .wk{font:600 14px var(--mono);min-width:150px;text-align:center}
 button:focus-visible,input:focus-visible{outline:3px solid var(--marker);outline-offset:2px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
@@ -103,30 +117,30 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
 </style>
 </head>
 <body>
-<div class="blocked" id="blocked" hidden><h1>Megan's Week</h1><p id="blockedMsg">Open this from the private link AJ sent you.</p></div>
+<div class="blocked" id="blocked" hidden><h1 id="h1">Megan's Week</h1><p id="blockedMsg">Open this from the private link AJ sent you.</p></div>
 <div class="wrap" id="app">
   <header>
-    <div><div class="eyebrow">Martin County PAL · Strategic Growth</div><h1>Megan's Week</h1></div>
-    <div class="nav"><button id="prev" aria-label="Previous week">&#8249; Prev</button><span class="wk" id="wk">Loading</span><button id="next" aria-label="Next week">Next &#8250;</button><button id="refresh">Refresh</button></div>
+    <div><div class="eyebrow">Martin County PAL · Strategic Growth</div><h1 id="h1">Megan's Week</h1></div>
+    <div class="nav"><a id="back" class="back" href="../log/" hidden>&#8249; Back to plays</a><div class="seg" role="group" aria-label="Time range"><button data-r="week" aria-pressed="true">Week</button><button data-r="month" aria-pressed="false">Month</button><button data-r="all" aria-pressed="false">Since start</button></div><button id="prev" aria-label="Previous">&#8249; Prev</button><span class="wk" id="wk">Loading</span><button id="next" aria-label="Next">Next &#8250;</button><button id="refresh">Refresh</button></div>
   </header>
   <div id="loading" class="loading">Loading the week</div>
   <div id="main" hidden style="display:grid;gap:18px">
     <div class="headline" id="headline"></div>
 
-    <div class="card"><h2>Plays by day</h2><div class="days" id="days"></div></div>
+    <div class="card" id="daysCard"><h2 id="daysTitle">Plays by day</h2><div class="days" id="days"></div></div>
 
     <div class="cols">
       <div class="card"><h2>Scoreboard vs targets</h2><div id="meters" style="display:grid;gap:12px"></div><div class="mini" id="mini"></div></div>
-      <div class="card"><h2>Where the chain breaks</h2><p style="margin:0;font-size:13px;color:var(--muted)">Rolling four weeks. Benchmarks are starting estimates until her real rates settle.</p><div id="rates" style="display:grid;gap:8px"></div><div class="hint" id="hint"></div></div>
+      <div class="card"><h2>Where the chain breaks</h2><p style="margin:0;font-size:13px;color:var(--muted)"><span id="ratesSpan">Rolling four weeks</span>. Benchmarks are starting estimates until her real rates settle.</p><div id="rates" style="display:grid;gap:8px"></div><div class="hint" id="hint"></div></div>
     </div>
 
     <div class="cols">
       <div class="card"><h2>Year one pace</h2><div class="pace"><div class="fill" id="paceFill"></div><div class="mark" id="paceMark"></div></div><div class="legend" id="paceLegend"></div></div>
-      <div class="card"><h2>Last eight weeks</h2><div id="trend" style="overflow-x:auto"></div></div>
+      <div class="card"><h2 id="trendTitle">Last eight weeks</h2><div id="trend" style="overflow-x:auto"></div></div>
     </div>
 
     <div class="cols">
-      <div class="card"><h2>Names and notes this week</h2><div class="notes" id="notes"></div></div>
+      <div class="card"><h2 id="notesTitle">Names and notes this week</h2><div class="notes" id="notes"></div></div>
       <div class="card" id="targetsCard"><h2>Targets for next week</h2>
         <p style="margin:0;font-size:13px;color:var(--muted)">Set these at the end of your Friday meeting. Megan sees the new touches target on her phone right away.</p>
         <div class="fields">
@@ -146,7 +160,9 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
   var KEY=PAL.key('dash');
   if (!PAL.configured || !KEY) { $('app').hidden=true; $('blocked').hidden=false; if(!PAL.configured) $('blockedMsg').textContent='This dashboard isn’t connected yet. AJ is finishing setup.'; return; }
   PAL.registerWorker();
-  var week=null, data=null;
+  if (/[?&]from=log/.test(location.search)) $('back').hidden=false;
+  var week=null, data=null, range='week', anchor='';
+  try{ var rr=localStorage.getItem('palplays.range'); if(rr) range=rr; }catch(e){}
   var DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function pd(s){var a=s.split('-');return new Date(Date.UTC(+a[0],+a[1]-1,+a[2],12));}
   function lab(s){var d=pd(s);return MN[d.getUTCMonth()]+' '+d.getUTCDate();}
@@ -155,26 +171,50 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
   function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
   function call(fn,args,ok,fail){ PAL.call(KEY,fn,args[0]).then(ok, fail||function(e){ if(e&&e.server){ $('app').hidden=true;$('blocked').hidden=false;$('blockedMsg').textContent=e.message+' Ask AJ for your link.'; return; } $('wk').textContent='No connection'; $('loading').textContent='Can’t reach the data right now. Try Refresh in a minute.'; }); }
 
-  function load(){ $('wk').textContent='Loading'; call('getDashboard',[week||''],function(d){data=d;week=d.weekStart;render();}); }
-  $('prev').onclick=function(){week=add(week,-7);load();};
-  $('next').onclick=function(){week=add(week,7);load();};
+  function addMonth(s,n){var d=pd(s.slice(0,8)+'01');d.setUTCMonth(d.getUTCMonth()+n);return d.toISOString().slice(0,10);}
+  function setSeg(){ document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-r')===range)); }); $('prev').hidden=$('next').hidden=(range==='all'); }
+  function load(){ setSeg(); $('wk').textContent='Loading'; call('getDashboard',[{range:range,anchor:anchor}],function(d){data=d;anchor=d.anchor;render();}); }
+  document.querySelectorAll('.seg button').forEach(function(b){ b.onclick=function(){ range=b.getAttribute('data-r'); try{localStorage.setItem('palplays.range',range);}catch(e){} anchor=data?data.today:''; load(); }; });
+  $('prev').onclick=function(){ anchor = range==='month' ? addMonth(anchor,-1) : add(data.rangeStart,-7); load(); };
+  $('next').onclick=function(){ anchor = range==='month' ? addMonth(anchor,1) : add(data.rangeStart,7); load(); };
   $('refresh').onclick=load;
 
   function render(){
     var d=data,s=d.settings,t=d.totals;
     $('loading').hidden=true;$('main').hidden=false;
-    $('wk').textContent=lab(d.weekStart)+' to '+lab(add(d.weekStart,4));
+    var FM=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    $('wk').textContent = d.range==='week' ? lab(d.rangeStart)+' to '+lab(add(d.rangeStart,4)) : d.range==='month' ? FM[pd(d.rangeStart).getUTCMonth()]+' '+pd(d.rangeStart).getUTCFullYear() : 'Since '+lab(d.firstDay);
+    var unit = d.range==='week'?'this week':d.range==='month'?'this month':'since start';
+    $('h1').textContent = d.range==='week' ? 'Megan\'s Week' : d.range==='month' ? 'Megan\'s Month' : 'Megan\'s Progress';
+    var tw = d.targetToDate ? 'target to date ' : 'target ';
+    var sc = d.targetScale, tgt=function(v){return Math.round(v*sc);};
     var H=$('headline');H.innerHTML='';
-    var phBad=d.days.some(function(x){return !x.weekend&&x.required.some(function(r){return r.name==='Power Hour'&&(r.state==='missed'||r.state==='short');});});
+    var phBad=d.phMissed>0;
     [
       {l:'Power Hour',v:d.workdaysSoFar?d.phDone+' of '+d.workdaysSoFar:'Starts soon',s:d.workdaysSoFar?'workdays so far':'no plays logged yet',cls:phBad?'bad':(d.workdaysSoFar?'ok':'')},
-      {l:'Plays run',v:d.playsRun,s:'ended this week'},
-      {l:'Touches',v:t.touch,s:'target '+s.weekly_touches,cls:t.touch>=s.weekly_touches?'ok':''},
-      {l:'Tours booked',v:t.tour_booked,s:'target '+s.weekly_tours_booked,cls:t.tour_booked>=s.weekly_tours_booked?'ok':''},
+      {l:'Plays run',v:d.playsRun,s:'ended '+unit},
+      {l:'Touches',v:t.touch,s:tw+tgt(s.weekly_touches),cls:t.touch>=tgt(s.weekly_touches)?'ok':''},
+      {l:'Tours booked',v:t.tour_booked,s:tw+tgt(s.weekly_tours_booked),cls:t.tour_booked>=tgt(s.weekly_tours_booked)?'ok':''},
       {l:'Pledged',v:money(t.pledge),s:d.pledgesThisWeek+' pledge'+(d.pledgesThisWeek===1?'':'s')}
     ].forEach(function(x){var c=el('div','hl'+(x.cls?' '+x.cls:''));c.appendChild(el('span','l',x.l));c.appendChild(el('span','v',String(x.v)));c.appendChild(el('span','s',x.s));H.appendChild(c);});
 
     var D=$('days');D.innerHTML='';
+    $('daysCard').hidden = d.range==='all';
+    $('daysTitle').textContent = d.range==='month' ? 'Power Hour by day' : 'Plays by day';
+    D.className = d.range==='month' ? 'mgrid' : 'days';
+    if (d.range==='month') {
+      ['Mon','Tue','Wed','Thu','Fri'].forEach(function(h){ D.appendChild(el('div','mhead',h)); });
+      var wds=d.days.filter(function(x){return !x.weekend;});
+      if (wds.length){ var lead=(pd(wds[0].date).getUTCDay()+6)%7; for(var z=0;z<lead;z++) D.appendChild(el('div','mcell blank')); }
+      wds.forEach(function(day){
+        var ph=day.required.filter(function(r){return r.name==='Power Hour';})[0]||{state:'pending'};
+        var c=el('div','mcell '+(day.future?'future':day.before?'before':ph.state));
+        c.appendChild(el('b',null,String(pd(day.date).getUTCDate())));
+        var ended=day.plays.filter(function(p){return p.status==='ended';}).length;
+        if(!day.future&&!day.before){ c.appendChild(el('span',null,ph.state==='done'?'PH '+ph.minutes+'m':ph.state==='short'?'PH '+ph.minutes+'m short':ph.state==='missed'?'No PH':'Today')); c.appendChild(el('span',null,ended+' play'+(ended===1?'':'s')+' · '+day.touches+' t')); }
+        D.appendChild(c);
+      });
+    } else
     d.days.forEach(function(day){
       var c=el('div','day'+(day.future?' future':''));
       var h=el('div','dh');h.appendChild(el('b',null,DN[pd(day.date).getUTCDay()]));h.appendChild(el('span',null,lab(day.date)));c.appendChild(h);
@@ -190,7 +230,7 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
     });
 
     var M=$('meters');M.innerHTML='';
-    [['Touches',t.touch,s.weekly_touches],['New names',t.new_name,s.weekly_new_names],['Tours booked',t.tour_booked,s.weekly_tours_booked]].forEach(function(m){
+    [['Touches',t.touch,tgt(s.weekly_touches)],['New names',t.new_name,tgt(s.weekly_new_names)],['Tours booked',t.tour_booked,tgt(s.weekly_tours_booked)]].forEach(function(m){
       var w=el('div','meter');var r=el('div','row');r.appendChild(el('span',null,m[0]));r.appendChild(el('b',null,m[1]+' of '+m[2]));w.appendChild(r);
       var b=el('div','bar');var i=el('i');i.style.width=Math.min(100,m[1]/Math.max(1,m[2])*100)+'%';b.appendChild(i);w.appendChild(b);M.appendChild(w);
     });
@@ -205,8 +245,10 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
       c.appendChild(el('span','b',r.den?(r.num+' of '+r.den):'Not enough logged yet'));c.appendChild(el('span','b','benchmark '+Math.round(r.bench*100)+'%'));R.appendChild(c);
     });
     var hints=['Few conversations from her touches. Check where the names come from and try different call times.','Conversations aren’t turning into tours. Role play the first 30 seconds of a call.','Booked tours aren’t happening. Confirm each tour the day before.','Asks aren’t closing. Check she’s asking for the right rung on the ladder.'];
-    var fourWkTouches=d.trend.slice(-4).reduce(function(a,w){return a+w.touches;},0);
-    var hint = fourWkTouches < s.weekly_touches*4*0.75 && d.trend.slice(-4).some(function(w){return w.touches>0;}) ? 'Activity comes first. Four week touches are '+fourWkTouches+' against about '+(s.weekly_touches*4)+'. Coach the plays before the skills.' : (weak>=0&&worst<1 ? hints[weak] : 'No weak link yet. Keep the volume up.');
+    $('ratesSpan').textContent = d.range==='week' ? 'Rolling four weeks' : d.range==='month' ? 'This month' : 'Since logging started';
+    var winT = d.range==='week' ? d.trend.slice(-4).reduce(function(a,w){return a+w.touches;},0) : t.touch;
+    var winG = d.range==='week' ? s.weekly_touches*4 : tgt(s.weekly_touches);
+    var hint = winT < winG*0.75 && winT>0 ? 'Activity comes first. Touches are '+winT+' against about '+winG+'. Coach the plays before the skills.' : (weak>=0&&worst<1 ? hints[weak] : 'No weak link yet. Keep the volume up.');
     $('hint').textContent=hint;
 
     var pct=Math.min(100,d.ytd/s.year_target*100), pp=Math.min(100,d.pace/s.year_target*100);
@@ -216,10 +258,12 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
     var b=el('span');b.innerHTML='Pace today <b></b>';b.querySelector('b').textContent=money(d.pace);L.appendChild(b);
     var g=el('span');g.innerHTML='Goal <b></b>';g.querySelector('b').textContent=money(s.year_target);L.appendChild(g);
 
+    $('trendTitle').textContent = d.range==='week' ? 'Last eight weeks' : 'By week';
+    $('notesTitle').textContent = 'Names and notes '+unit;
     drawTrend(d.trend,s);
 
     var N=$('notes');N.innerHTML='';
-    if(!d.notes.length)N.appendChild(el('div',null,'No names or notes logged this week.'));
+    if(!d.notes.length)N.appendChild(el('div',null,'No names or notes logged '+unit+'.'));
     d.notes.forEach(function(n){var r=el('div');r.appendChild(el('span',null,DN[pd(n.date).getUTCDay()]+' · '+n.kind.replace('_',' ')));r.appendChild(document.createTextNode(n.text));N.appendChild(r);});
 
     $('targetsCard').hidden=!d.canEdit;
@@ -237,9 +281,10 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
     tr.forEach(function(w,i){
       var x=pl+i*bw+bw*0.18,h=Math.max(0,y(0)-y(w.touches));
       sv('rect',{x:x,y:y(w.touches),width:bw*0.64,height:h,rx:2,fill:i===tr.length-1?'var(--turf)':'var(--turf-soft)',stroke:'var(--turf)','stroke-width':i===tr.length-1?0:1});
-      if(w.touches)sv('text',{x:x+bw*0.32,y:y(w.touches)-4,'text-anchor':'middle','font-size':10,fill:'var(--ink)'},w.touches);
-      sv('text',{x:x+bw*0.32,y:Hh-18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},lab(w.week));
-      if(!w.before&&w.phOf)sv('text',{x:x+bw*0.32,y:Hh-5,'text-anchor':'middle','font-size':9.5,fill:w.phDays>=w.phOf?'var(--turf)':'var(--muted)'},'PH '+w.phDays+'/'+w.phOf);
+      if(w.touches&&tr.length<=12)sv('text',{x:x+bw*0.32,y:y(w.touches)-4,'text-anchor':'middle','font-size':10,fill:'var(--ink)'},w.touches);
+      var every=Math.ceil(tr.length/9);
+      if((tr.length-1-i)%every===0)sv('text',{x:x+bw*0.32,y:Hh-18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},lab(w.week));
+      if(!w.before&&w.phOf&&tr.length<=12)sv('text',{x:x+bw*0.32,y:Hh-5,'text-anchor':'middle','font-size':9.5,fill:w.phDays>=w.phOf?'var(--turf)':'var(--muted)'},'PH '+w.phDays+'/'+w.phOf);
     });
     sv('line',{x1:pl,x2:W-6,y1:y(s.weekly_touches),y2:y(s.weekly_touches),stroke:'var(--marker)','stroke-width':2,'stroke-dasharray':'5 4'});
     sv('text',{x:W-8,y:y(s.weekly_touches)-5,'text-anchor':'end','font-size':10,fill:'var(--marker-ink)'},'target '+s.weekly_touches);

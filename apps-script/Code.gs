@@ -58,6 +58,7 @@ function setup() {
   if (extra && ss.getSheets().length > 1) ss.deleteSheet(extra);
   if (!props.getProperty('LOG_KEY')) props.setProperty('LOG_KEY', newKey_());
   if (!props.getProperty('DASH_KEY')) props.setProperty('DASH_KEY', newKey_());
+  if (!props.getProperty('VIEW_KEY')) props.setProperty('VIEW_KEY', newKey_());
   Logger.log('Setup done. Sheet: ' + ss.getUrl());
   Logger.log('Next: Deploy > New deployment > Web app (Execute as Me, Who has access Anyone), then run showLinks().');
 }
@@ -69,7 +70,10 @@ function showLinks() {
   if (!url) { Logger.log('Deploy the web app first, then run showLinks() again.'); return; }
   Logger.log('Data service URL: use the Web app URL from Deploy > Manage deployments (it ends in /exec). If this one ends in /dev, ignore it: ' + url);
   Logger.log('Megan (logger): ' + pages + 'log/#k=' + props.getProperty('LOG_KEY'));
+  if (!props.getProperty('VIEW_KEY')) props.setProperty('VIEW_KEY', newKey_());
   Logger.log('Noel (dashboard): ' + pages + 'dashboard/#k=' + props.getProperty('DASH_KEY'));
+  Logger.log('View-only dashboard (anyone you trust, cannot change targets): ' + pages + 'dashboard/#k=' + props.getProperty('VIEW_KEY'));
+  Logger.log('Megan opens the dashboard from the My week button in her logger. She needs no extra link.');
 }
 
 /** Run this only if a link is ever shared by mistake. Old links stop working. */
@@ -77,6 +81,7 @@ function resetLinks() {
   var props = PropertiesService.getScriptProperties();
   props.setProperty('LOG_KEY', newKey_());
   props.setProperty('DASH_KEY', newKey_());
+  props.setProperty('VIEW_KEY', newKey_());
   showLinks();
 }
 
@@ -141,8 +146,8 @@ function json_(o) {
 
 function auth_(k, need) {
   var props = PropertiesService.getScriptProperties();
-  var log = props.getProperty('LOG_KEY'), dash = props.getProperty('DASH_KEY');
-  var ok = need === 'log' ? k === log : need === 'dash' ? k === dash : (k === log || k === dash);
+  var log = props.getProperty('LOG_KEY'), dash = props.getProperty('DASH_KEY'), view = props.getProperty('VIEW_KEY');
+  var ok = need === 'log' ? k === log : need === 'dash' ? k === dash : (k === log || k === dash || (!!view && k === view));
   if (!k || !ok) throw new Error('This link isn\'t valid.');
 }
 
@@ -334,46 +339,57 @@ function streak_(plays, st, reqNames) {
 
 /* ---------------- dashboard API (Noel) ---------------- */
 
-function getDashboard(k, weekStart) {
+/** arg: a week start date string, or { range: 'week' | 'month' | 'all', anchor: 'yyyy-MM-dd' } */
+function getDashboard(k, arg) {
   auth_(k, 'any');
   var st = settings_();
   var today = dayOf_(Date.now());
-  var ws = monday_(weekStart || today);
-  var we = addDays_(ws, 6);
+  var opt = (arg && typeof arg === 'object') ? arg : { range: 'week', anchor: arg || today };
+  var range = ['week', 'month', 'all'].indexOf(opt.range) >= 0 ? opt.range : 'week';
+  var anchor = /^\d{4}-\d{2}-\d{2}$/.test(String(opt.anchor || '')) ? opt.anchor : today;
   var plays = plays_();
   var ev = events_();
   var reqNames = playList_().filter(function (p) { return p.required; }).map(function (p) { return p.name; });
   var firstDay = today;
   plays.forEach(function (p) { if (p.date && p.date < firstDay) firstDay = p.date; });
   ev.forEach(function (e) { if (e.date && e.date < firstDay) firstDay = e.date; });
+
+  var ws, we;
+  if (range === 'week') { ws = monday_(anchor); we = addDays_(ws, 6); }
+  else if (range === 'month') { ws = anchor.slice(0, 8) + '01'; var nm = addDays_(ws, 32).slice(0, 8) + '01'; we = addDays_(nm, -1); }
+  else { ws = firstDay; we = today; }
+
   var sumType = function (from, to, type) {
     return ev.filter(function (e) { return e.type === type && e.date >= from && e.date <= to; })
       .reduce(function (a, e) { return a + (type === 'pledge' ? e.amount : e.qty); }, 0);
   };
-
-  var days = [];
-  for (var i = 0; i < 7; i++) {
-    var d = addDays_(ws, i);
+  var pledgeCount = function (from, to) { return ev.filter(function (e) { return e.type === 'pledge' && e.date >= from && e.date <= to; }).length; };
+  var dayInfo = function (d) {
     var dp = plays.filter(function (p) { return p.date === d; }).sort(function (a, b) { return a.start - b.start; });
-    var weekend = i >= 5;
-    if (weekend && !dp.length) continue;
+    var wd = dow_(d), weekend = wd === 0 || wd === 6;
     var req = reqNames.map(function (n) {
       var v = doneFor_(plays, d, n, st);
       return { name: n, minutes: Math.abs(v), state: v > 0 ? 'done' : v < 0 ? 'short' : (d > today ? 'upcoming' : (d < firstDay ? 'before' : (d === today ? 'pending' : 'missed'))) };
     });
-    days.push({
+    return {
       date: d, weekend: weekend, future: d > today, before: d < firstDay,
       plays: dp.map(function (p) { return { play: p.play, minutes: p.minutes, status: p.status, start: p.start }; }),
       required: req,
       touches: sumType(d, d, 'touch'), tours: sumType(d, d, 'tour_booked'), asks: sumType(d, d, 'ask')
-    });
+    };
+  };
+
+  var days = [], allDays = [];
+  for (var d = ws; d <= we; d = addDays_(d, 1)) {
+    var info = dayInfo(d);
+    allDays.push(info);
+    if (range !== 'all' && !(info.weekend && !info.plays.length)) days.push(info);
   }
 
   var totals = {};
   TYPES.forEach(function (t) { totals[t] = sumType(ws, we, t); });
-  var pledgeCount = function (from, to) { return ev.filter(function (e) { return e.type === 'pledge' && e.date >= from && e.date <= to; }).length; };
 
-  var rs = addDays_(ws, -21);
+  var rs = range === 'week' ? addDays_(ws, -21) : ws;
   var R = {}; TYPES.forEach(function (t) { R[t] = sumType(rs, we, t); });
   var rates = [
     { name: 'Touches to conversations', num: R.conversation, den: R.touch, bench: 0.25 },
@@ -382,13 +398,18 @@ function getDashboard(k, weekStart) {
     { name: 'Asks to pledges', num: pledgeCount(rs, we), den: R.ask, bench: 0.33 }
   ];
 
-  var trend = [];
-  for (var w = 7; w >= 0; w--) {
-    var a = addDays_(ws, -7 * w), b = addDays_(a, 6);
-    var phDays = 0;
-    var counted = 0;
+  var weekRow = function (a) {
+    var b = addDays_(a, 6), phDays = 0, counted = 0;
     for (var j = 0; j < 5; j++) { var dj = addDays_(a, j); if (dj < firstDay || dj > today) continue; counted++; if (doneFor_(plays, dj, 'Power Hour', st) > 0) phDays++; }
-    trend.push({ week: a, before: b < firstDay, touches: sumType(a, b, 'touch'), tours: sumType(a, b, 'tour_booked'), pledged: sumType(a, b, 'pledge'), phDays: phDays, phOf: counted });
+    return { week: a, before: b < firstDay, touches: sumType(a, b, 'touch'), tours: sumType(a, b, 'tour_booked'), pledged: sumType(a, b, 'pledge'), phDays: phDays, phOf: counted };
+  };
+  var trend = [];
+  if (range === 'week') { for (var w = 7; w >= 0; w--) trend.push(weekRow(addDays_(ws, -7 * w))); }
+  else {
+    var first = monday_(ws), last = monday_(we < today ? we : today);
+    var starts = [];
+    for (var m = first; m <= last; m = addDays_(m, 7)) starts.push(m);
+    starts.slice(-26).forEach(function (m) { trend.push(weekRow(m)); });
   }
 
   var ytd = st.starting_balance + sumType(st.start_date, '9999-12-31', 'pledge');
@@ -400,13 +421,19 @@ function getDashboard(k, weekStart) {
   plays.filter(function (p) { return p.note && p.date >= ws && p.date <= we; }).forEach(function (p) { notes.push({ date: p.date, ts: p.end || p.start, text: p.note, kind: p.play }); });
   notes.sort(function (a, b) { return b.ts - a.ts; });
 
-  var workdaysSoFar = days.filter(function (d) { return !d.weekend && !d.future && !d.before; }).length;
-  var phDone = days.filter(function (d) { return !d.weekend && d.required.some(function (r) { return r.name === 'Power Hour' && r.state === 'done'; }); }).length;
+  var counts = allDays.filter(function (x) { return !x.weekend && !x.future && !x.before; });
+  var workdaysSoFar = counts.length;
+  var phDone = counts.filter(function (x) { return x.required.some(function (r) { return r.name === 'Power Hour' && r.state === 'done'; }); }).length;
+  var phMissed = counts.filter(function (x) { return x.required.some(function (r) { return r.name === 'Power Hour' && (r.state === 'missed' || r.state === 'short'); }); }).length;
+  var workdaysInRange = allDays.filter(function (x) { return !x.weekend; }).length;
+  var toDate = range !== 'week' && we >= today;
+  var activeWorkdays = range === 'week' ? 5 : (toDate ? allDays.filter(function (x) { return !x.weekend && !x.future && !x.before; }).length : workdaysInRange);
 
   return {
-    weekStart: ws, weekEnd: we, today: today, settings: st, days: days, totals: totals,
+    range: range, anchor: anchor, weekStart: ws, rangeStart: ws, rangeEnd: we, today: today, firstDay: firstDay,
+    settings: st, days: days, totals: totals, targetScale: Math.max(1, activeWorkdays) / 5, targetToDate: toDate,
     pledgesThisWeek: pledgeCount(ws, we), rates: rates, trend: trend, ytd: ytd, pace: pace,
-    notes: notes.slice(0, 25), phDone: phDone, workdaysSoFar: workdaysSoFar,
+    notes: notes.slice(0, 25), phDone: phDone, phMissed: phMissed, workdaysSoFar: workdaysSoFar,
     playsRun: plays.filter(function (p) { return p.date >= ws && p.date <= we && p.status === 'ended'; }).length,
     canEdit: k === PropertiesService.getScriptProperties().getProperty('DASH_KEY')
   };

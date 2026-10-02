@@ -3,14 +3,14 @@
 A phone logger for Martin County PAL's Director of Strategic Growth, and a weekly dashboard for the executive director.
 
 - `log/`: the phone app. Start a play, tap as things happen, end the play. Works with no signal and saves when the phone reconnects.
-- `dashboard/`: the weekly view. Shows plays by day, Power Hour on every workday, numbers against targets, where the chain from touches to pledges breaks, and year one pace.
+- `dashboard/`: Week, Month and Since start views. Shows plays by day, Power Hour on every workday, numbers against targets, where the chain from touches to pledges breaks, and year one pace. Megan opens it read-only from the See my week button in her logger.
 - `apps-script/Code.gs`: the data service. It runs in Google Apps Script and is the only thing that reads or writes the Google Sheet.
 - `shared/config.js`: the data service URL. It isn't secret.
 - `test/`: an end-to-end check against mocked Google services. Run `node test/run.js` with Playwright installed.
 
 ## How access works
 
-Each screen opens from a private link that carries a key after `#k=`. The key never reaches GitHub and isn't in this repo. Without a valid key, the screens show only "Open this from the private link AJ sent you." The Google Sheet isn't shared with anyone.
+There are three keys: Megan's logger key, Noel's dashboard key (the only one that can change targets), and a view-only dashboard key for anyone else you trust. Each screen opens from a private link that carries its key after `#k=`. The key never reaches GitHub and isn't in this repo. Without a valid key, the screens show only "Open this from the private link AJ sent you." The Google Sheet isn't shared with anyone.
 
 The app sends no email and no notifications, and runs no scheduled jobs.
 

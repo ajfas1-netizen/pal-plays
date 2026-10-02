@@ -16,6 +16,11 @@ const check = (name, cond) => { results.push((cond ? 'PASS ' : 'FAIL ') + name);
 check('bad key refused', /isn't valid/.test(api('nope', 'getState').error || ''));
 check('logger key cannot change targets', /isn't valid/.test(api(L, 'saveTargets', { weekly_touches: 1 }).error || ''));
 check('dashboard key cannot log', /isn't valid/.test(api(D, 'batch', []).error || ''));
+const V = props.VIEW_KEY;
+check('view-only key reads the dashboard', !!(api(V, 'getDashboard', '').result || {}).days);
+check('view-only key cannot change targets', /isn't valid/.test(api(V, 'saveTargets', { weekly_touches: 1 }).error || ''));
+check('view-only key cannot log', /isn't valid/.test(api(V, 'batch', []).error || ''));
+check('only Noel\'s key can edit', api(V, 'getDashboard', '').result.canEdit === false && api(L, 'getDashboard', '').result.canEdit === false && api(D, 'getDashboard', '').result.canEdit === true);
 check('unknown request refused', /Unknown/.test(api(L, 'deleteEverything').error || ''));
 
 // seed two weeks of history
@@ -88,6 +93,14 @@ check('touches week of 9/21 = 95', dw.totals.touch === 95);
   const st2 = api(L, 'getState').result;
   check('play ended and saved', !st2.open && st2.todayPlays.length === 1);
 
+  // Megan taps See my week, then goes back
+  await p2.click('#weekLink'); await p2.waitForTimeout(1200);
+  check('My week opens the dashboard with her numbers', /of/.test(await p2.textContent('#headline')));
+  check('Megan does not see the targets editor', await p2.isHidden('#targetsCard'));
+  check('Back to plays button shows', await p2.isVisible('#back'));
+  await p2.click('#back'); await p2.waitForTimeout(900);
+  check('Back returns to her logger', await p2.isVisible('#startPH'));
+
   // no key at all
   const fresh = await b.newContext(); const p3 = await fresh.newPage();
   await p3.goto(base + 'log/'); await p3.waitForTimeout(500);
@@ -100,6 +113,14 @@ check('touches week of 9/21 = 95', dw.totals.touch === 95);
   const q = await lap.newPage(); watch(q, 'dash');
   await q.goto(base + 'dashboard/#k=' + D); await q.waitForTimeout(1000);
   check('dashboard renders the week', /of 5/.test(await q.textContent('#headline')));
+  await q.click('.seg button[data-r="month"]'); await q.waitForTimeout(900);
+  check('Month view shows the month and a calendar', /2026/.test(await q.textContent('#wk')) && (await q.locator('.mcell').count()) >= 20);
+  await q.screenshot({ path: __dirname + '/shot-dash-month.png', fullPage: true });
+  await q.click('#prev'); await q.waitForTimeout(900);
+  check('Prev month moves back a month', /September 2026/.test(await q.textContent('#wk')));
+  await q.click('.seg button[data-r="all"]'); await q.waitForTimeout(900);
+  check('Since start view hides the day grid and shows the start', /Since/.test(await q.textContent('#wk')) && await q.isHidden('#daysCard'));
+  await q.click('.seg button[data-r="week"]'); await q.waitForTimeout(900);
   await q.fill('#tT', '120'); await q.click('#saveT'); await q.waitForTimeout(800);
   check('Noel can save targets', api(D, 'getDashboard', '').result.settings.weekly_touches === 120);
   await q.screenshot({ path: __dirname + '/shot-dash.png', fullPage: true });

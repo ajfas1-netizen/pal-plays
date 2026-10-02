@@ -12,10 +12,12 @@ About 15 minutes. Do the Google steps signed in to the account that should own t
    - Execute as: **Me**
    - Who has access: **Anyone**
    Click **Deploy**.
-5. Choose **showLinks** in the function menu and click **Run**. The execution log shows three lines:
+5. Choose **showLinks** in the function menu and click **Run**. The execution log shows these lines:
    - **Data service URL**: use the Web app URL from Deploy, Manage deployments. It ends in `/exec`. Paste it into `shared/config.js`. A URL ending in `/dev` only works for you.
    - **Megan (logger)**: send to Megan only.
-   - **Noel (dashboard)**: send to Noel only. Bookmark it yourself too.
+   - **Noel (dashboard)**: send to Noel only. It's the only link that can change targets.
+   - **View-only dashboard**: for anyone else you trust. It can't change anything.
+   Megan doesn't need a dashboard link. She taps **See my week** in her logger.
 
 ## 2. GitHub Pages
 
@@ -28,4 +30,8 @@ In the repo on GitHub: **Settings**, **Pages**, Source **Deploy from a branch**,
 
 ## If a link is ever shared by mistake
 
-Run **resetLinks** in Apps Script. Both old links stop working, and the log shows new ones. Megan re-adds hers to her home screen.
+Run **resetLinks** in Apps Script. All old links stop working, and the log shows new ones. Megan re-adds hers to her home screen.
+
+## Updating the data service later
+
+Paste the new `Code.gs`, click Save, then **Deploy**, **Manage deployments**, the pencil icon, Version **New version**, **Deploy**. The URL and links stay the same.

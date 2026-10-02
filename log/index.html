@@ -12,8 +12,8 @@
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" href="../icons/icon-192.png">
 <title>Megan's Plays</title>
-<script src="../shared/config.js?v=3"></script>
-<script src="../shared/api.js?v=3"></script>
+<script src="../shared/config.js?v=5"></script>
+<script src="../shared/api.js?v=5"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
@@ -33,6 +33,8 @@
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
 .app{max-width:520px;margin:0 auto;padding-inline:16px;padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(28px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.weeklink{display:flex;justify-content:space-between;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);text-decoration:none;font:600 15px var(--body)}
+.weeklink span{color:var(--turf);font-size:20px;line-height:1}
 .top h1{font:800 26px var(--display);text-transform:uppercase;letter-spacing:.02em;margin:0}
 .sync{font:500 12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--turf);display:inline-block}
@@ -100,6 +102,7 @@ input[type=number]{font-family:var(--mono)}
 <div class="blocked" id="blocked" hidden><h1>Megan's Plays</h1><p id="blockedMsg">Open this from the private link AJ sent you.</p></div>
 <div class="app" id="app">
   <div class="top"><h1 id="title">Megan's Plays</h1><div class="sync" id="sync"><i></i><span id="syncText">Loading</span></div></div>
+  <a class="weeklink" id="weekLink" href="../dashboard/?from=log">See my week <span aria-hidden="true">&#8250;</span></a>
 
   <!-- HOME -->
   <div id="home" style="display:grid;gap:14px">
@@ -151,6 +154,7 @@ input[type=number]{font-family:var(--mono)}
   var KEY = PAL.key('log');
   if (!PAL.configured || !KEY) { $('app').hidden=true; $('blocked').hidden=false; if(!PAL.configured) $('blockedMsg').textContent='This app isn’t connected yet. AJ is finishing setup.'; return; }
   PAL.registerWorker();
+  $('weekLink').href='../dashboard/?from=log#k='+KEY;
   var Q = []; try { Q = JSON.parse(localStorage.getItem('palplays.q') || '[]'); } catch(e) { Q = []; }
   var busy = false;
 
@@ -197,8 +201,8 @@ input[type=number]{font-family:var(--mono)}
 
   function render(){
     if (!state) return;
-    if (state.open) { $('home').hidden=true; $('inplay').hidden=false; renderPlay(); }
-    else { $('inplay').hidden=true; $('home').hidden=false; renderHome(); }
+    if (state.open) { $('home').hidden=true; $('weekLink').hidden=true; $('inplay').hidden=false; renderPlay(); }
+    else { $('inplay').hidden=true; $('home').hidden=false; $('weekLink').hidden=false; renderHome(); }
   }
   function renderHome(){
     var st=$('status'); st.innerHTML='';
