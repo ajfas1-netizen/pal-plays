@@ -94,11 +94,11 @@ check('touches week of 9/21 = 95', dw.totals.touch === 95);
   const st2 = api(L, 'getState').result;
   check('play ended and saved', !st2.open && st2.todayPlays.length === 1);
 
-  // Megan taps See my week, then goes back
+  // Meghan taps See my week, then goes back
   await p2.click('#weekLink'); await p2.waitForTimeout(1200);
   check('My week opens the dashboard with her numbers', /of/.test(await p2.textContent('#headline')));
-  check('Megan does not see the targets editor', await p2.isHidden('#targetsCard'));
-  check('Megan does not see the coaching guide link', await p2.isHidden('#guide'));
+  check('Meghan does not see the targets editor', await p2.isHidden('#targetsCard'));
+  check('Meghan does not see the coaching guide link', await p2.isHidden('#guide'));
   check('Back to plays button shows', await p2.isVisible('#back'));
   await p2.click('#back'); await p2.waitForTimeout(900);
   check('Back returns to her logger', await p2.isVisible('#startPH'));

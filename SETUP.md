@@ -14,10 +14,10 @@ About 15 minutes. Do the Google steps signed in to the account that should own t
    Click **Deploy**.
 5. Choose **showLinks** in the function menu and click **Run**. The execution log shows these lines:
    - **Data service URL**: use the Web app URL from Deploy, Manage deployments. It ends in `/exec`. Paste it into `shared/config.js`. A URL ending in `/dev` only works for you.
-   - **Megan (logger)**: send to Megan only.
+   - **Meghan (logger)**: send to Meghan only.
    - **Noel (dashboard)**: send to Noel only. It's the only link that can change targets.
    - **View-only dashboard**: for anyone else you trust. It can't change anything.
-   Megan doesn't need a dashboard link. She taps **See my week** in her logger.
+   Meghan doesn't need a dashboard link. She taps **See my week** in her logger.
 
 ## 2. GitHub Pages
 
@@ -25,12 +25,12 @@ In the repo on GitHub: **Settings**, **Pages**, Source **Deploy from a branch**,
 
 ## 3. Phones
 
-- **Megan:** open the link on her phone. iPhone: Safari, Share, Add to Home Screen. Android: Chrome menu, Add to Home screen. It opens full screen like an app from then on.
-- **Noel:** bookmark the dashboard link. Enter Megan's starting balance (incremental dollars since May 1, from GiveButter) at the bottom and click Save targets.
+- **Meghan:** open the link on her phone. iPhone: Safari, Share, Add to Home Screen. Android: Chrome menu, Add to Home screen. It opens full screen like an app from then on.
+- **Noel:** bookmark the dashboard link. Enter Meghan's starting balance (incremental dollars since May 1, from GiveButter) at the bottom and click Save targets.
 
 ## If a link is ever shared by mistake
 
-Run **resetLinks** in Apps Script. All old links stop working, and the log shows new ones. Megan re-adds hers to her home screen.
+Run **resetLinks** in Apps Script. All old links stop working, and the log shows new ones. Meghan re-adds hers to her home screen.
 
 ## Updating the data service later
 

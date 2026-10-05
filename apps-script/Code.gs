@@ -34,7 +34,7 @@ var DEFAULT_SETTINGS = [
   ['power_hour_min_minutes', 45, 'A Power Hour shorter than this is flagged'],
   ['starting_balance', 0, 'Incremental dollars since May 1 before the app started (from GiveButter)'],
   ['year_target', 250000, 'Year one incremental target'],
-  ['start_date', '2026-05-01', 'Megan\'s start date']
+  ['start_date', '2026-05-01', 'Meghan\'s start date']
 ];
 
 /* ---------------- setup ---------------- */
@@ -69,11 +69,11 @@ function showLinks() {
   var pages = props.getProperty('PAGES_URL') || PAGES_DEFAULT;
   if (!url) { Logger.log('Deploy the web app first, then run showLinks() again.'); return; }
   Logger.log('Data service URL: use the Web app URL from Deploy > Manage deployments (it ends in /exec). If this one ends in /dev, ignore it: ' + url);
-  Logger.log('Megan (logger): ' + pages + 'log/#k=' + props.getProperty('LOG_KEY'));
+  Logger.log('Meghan (logger): ' + pages + 'log/#k=' + props.getProperty('LOG_KEY'));
   if (!props.getProperty('VIEW_KEY')) props.setProperty('VIEW_KEY', newKey_());
   Logger.log('Noel (dashboard): ' + pages + 'dashboard/#k=' + props.getProperty('DASH_KEY'));
   Logger.log('View-only dashboard (anyone you trust, cannot change targets): ' + pages + 'dashboard/#k=' + props.getProperty('VIEW_KEY'));
-  Logger.log('Megan opens the dashboard from the My week button in her logger. She needs no extra link.');
+  Logger.log('Meghan opens the dashboard from the My week button in her logger. She needs no extra link.');
 }
 
 /** Run this only if a link is ever shared by mistake. Old links stop working. */
@@ -220,7 +220,7 @@ function withLock_(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
-/* ---------------- logger API (Megan) ---------------- */
+/* ---------------- logger API (Meghan) ---------------- */
 
 function startPlay(k, a) {
   auth_(k, 'log');
