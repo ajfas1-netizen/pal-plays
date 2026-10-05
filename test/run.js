@@ -116,6 +116,7 @@ check('touches week of 9/21 = 95', dw.totals.touch === 95);
   await q.goto(base + 'dashboard/#k=' + D); await q.waitForTimeout(1000);
   check('dashboard renders the week', /of \d|Starts soon/.test(await q.textContent('#headline')));
   await q.click('.seg button[data-r="month"]'); await q.waitForTimeout(900);
+  check('Month view retitles the visible heading', /Month/.test(await q.textContent('header h1')));
   check('Month view shows the month and a calendar', /2026/.test(await q.textContent('#wk')) && (await q.locator('.mcell').count()) >= 20);
   await q.screenshot({ path: __dirname + '/shot-dash-month.png', fullPage: true });
   await q.click('#prev'); await q.waitForTimeout(900);
