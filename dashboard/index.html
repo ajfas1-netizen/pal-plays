@@ -9,11 +9,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="../icons/dash-180.png?v=10">
+<link rel="apple-touch-icon" href="../icons/dash-180.png?v=11">
 <link rel="icon" href="../icons/dash-192.png">
 <title>Growth Dashboard</title>
-<script src="../shared/config.js?v=10"></script>
-<script src="../shared/api.js?v=10"></script>
+<script src="../shared/config.js?v=11"></script>
+<script src="../shared/api.js?v=11"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
@@ -219,7 +219,7 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
       var c=el('div','day'+(day.future?' future':''));
       var h=el('div','dh');h.appendChild(el('b',null,DN[pd(day.date).getUTCDay()]));h.appendChild(el('span',null,lab(day.date)));c.appendChild(h);
       day.required.forEach(function(r){
-        var txt=r.state==='done'?r.name+' '+r.minutes+' min':r.state==='short'?r.name+' only '+r.minutes+' min':r.state==='missed'?'No '+r.name:r.state==='pending'?r.name+' not yet':r.state==='before'?'Before logging started':r.name;
+        var txt=r.state==='done'?r.name+' '+r.minutes+' min'+(r.runs>1?' · '+r.runs+' runs':''):r.state==='short'?(r.runs>1?r.runs+' short runs, longest '+r.minutes+' min':r.name+' only '+r.minutes+' min'):r.state==='missed'?'No '+r.name:r.state==='pending'?r.name+' not yet':r.state==='before'?'Before logging started':r.name;
         if(!day.weekend)c.appendChild(el('div','ph '+r.state,txt));
       });
       var ch=el('div','chips');

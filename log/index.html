@@ -9,11 +9,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Plays">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="../icons/plays-180.png?v=10">
+<link rel="apple-touch-icon" href="../icons/plays-180.png?v=11">
 <link rel="icon" href="../icons/plays-192.png">
 <title>Meghan's Plays</title>
-<script src="../shared/config.js?v=10"></script>
-<script src="../shared/api.js?v=10"></script>
+<script src="../shared/config.js?v=11"></script>
+<script src="../shared/api.js?v=11"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
@@ -136,6 +136,12 @@ input[type=number]{font-family:var(--mono)}
 </div>
 
 <div class="sheet" id="pickSheet" hidden><div class="box"><h3>Start a play</h3><div class="list" id="pickList"></div><button class="cancel" id="pickCancel">Cancel</button></div></div>
+<div class="sheet" id="keepSheet" hidden><div class="box">
+  <h3>Keep the hour running?</h3>
+  <p style="margin:0;color:var(--muted)">Your Power Hour has run <b id="keepMins">0</b> minutes. Leave it running between calls and tap as you go. End it when the hour is done.</p>
+  <button class="go" id="keepRun" style="padding:14px;font-size:20px">Keep it running</button>
+  <button class="cancel" id="endAnyway">End it anyway</button>
+</div></div>
 <div class="sheet" id="pledgeSheet" hidden><div class="box">
   <h3>Log a pledge</h3>
   <label for="pAmt" style="font-size:13px;color:var(--muted);font-weight:600">Amount in dollars</label>
@@ -210,7 +216,7 @@ input[type=number]{font-family:var(--mono)}
     (state.required||[]).forEach(function(r){
       var p=document.createElement('span');
       p.className='pill '+(r.done>0?'ok':r.done<0?'warn':'bad');
-      p.textContent = r.name+': '+(r.done>0?'done, '+r.done+' min':r.done<0?'short, '+(-r.done)+' min':'not yet today');
+      p.textContent = r.name+': '+(r.done>0?'done, '+Math.round(r.done)+' min':r.done<0?'short, longest run '+Math.round(-r.done)+' min':'not yet today');
       st.appendChild(p);
     });
     var s=document.createElement('span'); s.className='pill'; s.textContent='Streak: '+(state.streak||0)+' workday'+(state.streak===1?'':'s'); st.appendChild(s);
@@ -265,15 +271,22 @@ input[type=number]{font-family:var(--mono)}
     if (qi>=0 && !busy){ Q.splice(qi,1); saveQ(); setSync(); } else enqueue('undo',{id:t.id});
     renderPlay(); toast('Undone');
   });
-  $('endBtn').addEventListener('click', function(){
+  function finishPlay(){
     var o=state.open; var m=Math.round((Date.now()-o.start)/60000);
     enqueue('endPlay',{playId:o.id, ts:Date.now(), note:$('pNote').value.trim()});
     state.todayPlays.push({play:o.play, minutes:m, status:'ended'});
-    (state.required||[]).forEach(function(r){ if(r.name===o.play){ var tot=Math.abs(r.done)+m; r.done = (o.play!=='Power Hour'||tot>=45)?tot:-tot; } });
+    (state.required||[]).forEach(function(r){ if(r.name===o.play){ var best=Math.max(r.done>0?r.done:Math.abs(r.done), m); r.done = (o.play!=='Power Hour'||best>=45)?best:-Math.max(best,0.01); } });
     Object.keys(o.counts).forEach(function(k){ state.todayCounts[k]=(state.todayCounts[k]||0)+o.counts[k]; });
     state.open=null; lastTaps=[]; $('pNote').value='';
     render(); toast(o.play+' logged, '+m+' min');
+  }
+  $('endBtn').addEventListener('click', function(){
+    var o=state.open; var m=Math.floor((Date.now()-o.start)/60000);
+    if (o.play==='Power Hour' && m<10) { $('keepMins').textContent=m; $('keepSheet').hidden=false; return; }
+    finishPlay();
   });
+  $('keepRun').addEventListener('click', function(){ $('keepSheet').hidden=true; toast('Still running. Next call.'); });
+  $('endAnyway').addEventListener('click', function(){ $('keepSheet').hidden=true; finishPlay(); });
 
   function start(play){
     var id=uid(), now=Date.now();

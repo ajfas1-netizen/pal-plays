@@ -318,10 +318,14 @@ function getState(k) {
   };
 }
 
+/** A required play counts only when one continuous run meets the minimum. Positive = done (longest run),
+ *  negative = ran but too short (longest run), 0 = not run. Short runs do not add up. */
 function doneFor_(plays, day, name, st) {
-  var m = 0;
-  plays.forEach(function (p) { if (p.date === day && p.play === name && p.status === 'ended') m += p.minutes || 0; });
-  return m >= (name === 'Power Hour' ? st.power_hour_min_minutes : 1) ? m : (m > 0 ? -m : 0);
+  var longest = 0, ran = false;
+  plays.forEach(function (p) { if (p.date === day && p.play === name && p.status === 'ended') { ran = true; longest = Math.max(longest, p.minutes || 0); } });
+  var need = name === 'Power Hour' ? st.power_hour_min_minutes : 1;
+  if (longest >= need) return longest;
+  return ran ? -Math.max(longest, 0.01) : 0;
 }
 
 function streak_(plays, st, reqNames) {
@@ -369,7 +373,8 @@ function getDashboard(k, arg) {
     var wd = dow_(d), weekend = wd === 0 || wd === 6;
     var req = reqNames.map(function (n) {
       var v = doneFor_(plays, d, n, st);
-      return { name: n, minutes: Math.abs(v), state: v > 0 ? 'done' : v < 0 ? 'short' : (d > today ? 'upcoming' : (d < firstDay ? 'before' : (d === today ? 'pending' : 'missed'))) };
+      var runs = plays.filter(function (p) { return p.date === d && p.play === n && p.status === 'ended'; }).length;
+      return { name: n, minutes: Math.round(Math.abs(v)), runs: runs, state: v > 0 ? 'done' : v < 0 ? 'short' : (d > today ? 'upcoming' : (d < firstDay ? 'before' : (d === today ? 'pending' : 'missed'))) };
     });
     return {
       date: d, weekend: weekend, future: d > today, before: d < firstDay,
