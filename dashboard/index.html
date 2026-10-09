@@ -9,11 +9,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="../icons/dash-180.png?v=11">
+<link rel="apple-touch-icon" href="../icons/dash-180.png?v=12">
 <link rel="icon" href="../icons/dash-192.png">
 <title>Growth Dashboard</title>
-<script src="../shared/config.js?v=11"></script>
-<script src="../shared/api.js?v=11"></script>
+<script src="../shared/config.js?v=12"></script>
+<script src="../shared/api.js?v=12"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
@@ -121,7 +121,7 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
 <div class="wrap" id="app">
   <header>
     <div><div class="eyebrow">Martin County PAL · Strategic Growth</div><h1 id="h1">Meghan's Week</h1></div>
-    <div class="nav"><a id="back" class="back" href="../log/" hidden>&#8249; Back to plays</a><div class="seg" role="group" aria-label="Time range"><button data-r="week" aria-pressed="true">Week</button><button data-r="month" aria-pressed="false">Month</button><button data-r="all" aria-pressed="false">Since start</button></div><button id="prev" aria-label="Previous">&#8249; Prev</button><span class="wk" id="wk">Loading</span><button id="next" aria-label="Next">Next &#8250;</button><button id="refresh">Refresh</button><a id="guide" class="back" href="https://claude.ai/artifact/MGq7rNwPPWGGtVXsacQSwx" target="_blank" rel="noopener" hidden>Coaching guide &#8599;</a></div>
+    <div class="nav"><a id="back" class="back" href="../log/" hidden>&#8249; Back to plays</a><div class="seg" role="group" aria-label="Time range"><button data-r="week" aria-pressed="true">Week</button><button data-r="month" aria-pressed="false">Month</button><button data-r="all" aria-pressed="false">Since start</button></div><button id="prev" aria-label="Previous">&#8249; Prev</button><span class="wk" id="wk">Loading</span><button id="next" aria-label="Next">Next &#8250;</button><button id="refresh">Refresh</button></div>
   </header>
   <div id="loading" class="loading">Loading the week</div>
   <div id="main" hidden style="display:grid;gap:18px">
@@ -267,7 +267,6 @@ input{font:500 15px var(--mono);padding:8px 10px;border:1px solid var(--line);bo
     d.notes.forEach(function(n){var r=el('div');r.appendChild(el('span',null,DN[pd(n.date).getUTCDay()]+' · '+n.kind.replace('_',' ')));r.appendChild(document.createTextNode(n.text));N.appendChild(r);});
 
     $('targetsCard').hidden=!d.canEdit;
-    $('guide').hidden=!d.canEdit;
     $('tT').value=s.weekly_touches;$('tN').value=s.weekly_new_names;$('tB').value=s.weekly_tours_booked;$('tS').value=s.starting_balance;
   }
 

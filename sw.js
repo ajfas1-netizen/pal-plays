@@ -1,6 +1,6 @@
 // Keeps the two screens opening when the phone has no signal. Data calls are never cached.
-var CACHE = 'pal-plays-v11';
-var SHELL = ['./', './log/', './dashboard/', './shared/api.js?v=11', './shared/config.js?v=11', './icons/plays-192.png', './icons/plays-512.png', './icons/plays-180.png', './icons/dash-192.png', './icons/dash-512.png', './icons/dash-180.png', './log/manifest.webmanifest', './dashboard/manifest.webmanifest'];
+var CACHE = 'pal-plays-v12';
+var SHELL = ['./', './log/', './dashboard/', './shared/api.js?v=12', './shared/config.js?v=12', './icons/plays-192.png', './icons/plays-512.png', './icons/plays-180.png', './icons/dash-192.png', './icons/dash-512.png', './icons/dash-180.png', './log/manifest.webmanifest', './dashboard/manifest.webmanifest'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
 });
